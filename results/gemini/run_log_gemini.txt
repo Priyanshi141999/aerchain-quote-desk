@@ -1,8 +1,3 @@
 Provider: gemini
 [llm] Gemini models usable by this key, best first: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash']
-[llm] gemini-3.8-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
-[llm] gemini-3.8-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
-[llm] gemini-3.7-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
-[llm] gemini-3.7-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
-[llm] gemini-3.6-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
-[llm] gemini-3.6-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.8-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
