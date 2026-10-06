@@ -73,7 +73,11 @@ def run_all(data_dir: Path, out_dir: Path, use_cache=False, only: list[str] | No
             continue
         cache = out_dir / f"raw_{folder.name}_{llm.provider()}.json"
         t0 = time.time()
-        results[key] = process_vendor(folder, items, questions, terms, prev, cache, use_cache)
+        try:
+            results[key] = process_vendor(folder, items, questions, terms, prev, cache, use_cache)
+        except Exception as e:  # one vendor failing must not lose the others
+            print(f"  {folder.name}: FAILED - {str(e)[:300]}", flush=True)
+            continue
         print(f"  {folder.name}: {time.time() - t0:.0f}s ({results[key]['meta'].get('model')})", flush=True)
         if pause:
             time.sleep(pause)

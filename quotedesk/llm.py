@@ -74,11 +74,11 @@ def _gemini_client():
     return genai.Client(api_key=key)
 
 
-def gemini_model(client=None) -> str:
-    """Pick the best Flash model this key can use (names change often, so we ask the API)."""
+def gemini_candidates(client=None) -> list[str]:
+    """Best-first list of Flash models this key can use. Names change often, so we ask the API."""
     global _gemini_model_cache
     if os.environ.get("GEMINI_MODEL"):
-        return os.environ["GEMINI_MODEL"]
+        return [os.environ["GEMINI_MODEL"]]
     if _gemini_model_cache:
         return _gemini_model_cache
     client = client or _gemini_client()
@@ -86,20 +86,22 @@ def gemini_model(client=None) -> str:
         available = {m.name.split("/")[-1] for m in client.models.list()}
     except Exception:
         available = set()
-    for name in GEMINI_PREFERENCE:
-        if name in available:
-            _gemini_model_cache = name
-            return name
-    flash = sorted(n for n in available if "flash" in n and "lite" not in n and "tts" not in n
-                   and "live" not in n and "audio" not in n and "image" not in n)
-    _gemini_model_cache = flash[-1] if flash else "gemini-2.5-flash"
+    picks = [n for n in GEMINI_PREFERENCE if n in available]
+    extra = sorted((n for n in available if "flash" in n and not any(x in n for x in ("lite", "tts", "live", "audio", "image", "embed", "transcribe"))
+                    and n not in picks), reverse=True)
+    picks += extra
+    _gemini_model_cache = picks or ["gemini-2.5-flash"]
+    print(f"[llm] Gemini models usable by this key, best first: {_gemini_model_cache[:6]}", flush=True)
     return _gemini_model_cache
 
 
-def _call_gemini(system: str, parts: list[Part], max_tokens: int) -> tuple[str, str]:
+def gemini_model(client=None) -> str:
+    return gemini_candidates(client)[0]
+
+
+def _call_gemini(system: str, parts: list[Part], max_tokens: int, model: str) -> tuple[str, str]:
     from google.genai import types
     client = _gemini_client()
-    model = gemini_model(client)
     contents = []
     for p in parts:
         if p.text is not None:
@@ -111,19 +113,19 @@ def _call_gemini(system: str, parts: list[Part], max_tokens: int) -> tuple[str, 
         temperature=0,
         max_output_tokens=max_tokens,
         response_mime_type="application/json",
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
     )
     resp = client.models.generate_content(model=model, contents=contents, config=cfg)
     return resp.text or "", model
 
 
 # ---------------------------------------------------------------- Claude
-def _call_claude(system: str, parts: list[Part], max_tokens: int) -> tuple[str, str]:
+def _call_claude(system: str, parts: list[Part], max_tokens: int, model: str = CLAUDE_DEFAULT) -> tuple[str, str]:
     import anthropic
     key = _secret("ANTHROPIC_API_KEY")
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set")
     client = anthropic.Anthropic(api_key=key)
-    model = os.environ.get("CLAUDE_MODEL", CLAUDE_DEFAULT)
     content = []
     for p in parts:
         if p.text is not None:
@@ -140,19 +142,30 @@ def _call_claude(system: str, parts: list[Part], max_tokens: int) -> tuple[str, 
     return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text"), model
 
 
-def complete_json(system: str, parts: list[Part], max_tokens: int = 16000, retries: int = 3) -> LLMResult:
+BUSY = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded", "high demand", "rate limit", "529")
+
+
+def complete_json(system: str, parts: list[Part], max_tokens: int = 16000, retries: int = 2) -> LLMResult:
+    """Call the model; if it is busy, wait and retry, then fall back to the next-best model."""
     prov = provider()
-    last = None
-    for attempt in range(retries):
-        t0 = time.time()
-        try:
-            if prov == "claude":
-                text, model = _call_claude(system, parts, max_tokens)
-            else:
-                text, model = _call_gemini(system, parts, max_tokens)
-            return LLMResult(data=_parse_json(text), provider=prov, model=model,
-                             seconds=round(time.time() - t0, 1), raw_text=text)
-        except Exception as e:  # rate limits, transient errors, malformed JSON
-            last = e
-            time.sleep(8 * (attempt + 1))
-    raise RuntimeError(f"{prov} call failed after {retries} attempts: {last}")
+    models = gemini_candidates() if prov == "gemini" else [os.environ.get("CLAUDE_MODEL", CLAUDE_DEFAULT), "claude-opus-5-5"]
+    errors = []
+    for model in models[:4]:
+        for attempt in range(retries):
+            t0 = time.time()
+            try:
+                if prov == "claude":
+                    text, used = _call_claude(system, parts, max_tokens, model)
+                else:
+                    text, used = _call_gemini(system, parts, max_tokens, model)
+                return LLMResult(data=_parse_json(text), provider=prov, model=used,
+                                 seconds=round(time.time() - t0, 1), raw_text=text)
+            except Exception as e:
+                msg = str(e)
+                errors.append(f"{model}: {msg[:160]}")
+                busy = any(b.lower() in msg.lower() for b in BUSY)
+                print(f"[llm] {model} attempt {attempt + 1} failed ({'busy' if busy else 'error'}): {msg[:120]}", flush=True)
+                if not busy and "JSON" not in msg and "Expecting" not in msg:
+                    break  # a real error (bad key, bad request): try the next model, don't hammer this one
+                time.sleep(15 * (attempt + 1))
+    raise RuntimeError(f"{prov}: all models failed. " + " | ".join(errors[-4:]))

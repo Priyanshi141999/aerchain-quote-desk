@@ -128,10 +128,14 @@ def main():
     total = len(rows)
     edges = edge_checks(R)
     eok = sum(1 for e in edges if e[2])
-    model = next(iter(R.values()))["meta"].get("model")
+    if not R:
+        print("No vendor could be processed (see errors above)."); sys.exit(1)
+    model = ", ".join(sorted({v["meta"].get("model") or "?" for v in R.values()}))
+    skipped = [k for k in "ABCDE" if k not in R and (not only or k in only)]
 
     md = [f"# Extraction accuracy report — {llm.provider()} ({model})\n",
-          f"**Prices: {ok}/{total} correct ({ok / total:.0%})** · **Edge cases handled: {eok}/{len(edges)}**\n",
+          f"**Prices: {ok}/{total} correct ({ok / total:.0%})** · **Edge cases handled: {eok}/{len(edges)}**"
+          + (f" · ⚠️ vendors not processed: {skipped}" if skipped else "") + "\n",
           "## Per vendor", "| Vendor | Prices correct | Time (s) |", "|---|---|---|"]
     for v in R:
         vr = [r for r in rows if r[0] == v]
