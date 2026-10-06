@@ -77,8 +77,6 @@ def _gemini_client():
 def gemini_candidates(client=None) -> list[str]:
     """Best-first list of Flash models this key can use. Names change often, so we ask the API."""
     global _gemini_model_cache
-    if os.environ.get("GEMINI_MODEL"):
-        return [os.environ["GEMINI_MODEL"]]
     if _gemini_model_cache:
         return _gemini_model_cache
     client = client or _gemini_client()
@@ -90,7 +88,12 @@ def gemini_candidates(client=None) -> list[str]:
     extra = sorted((n for n in available if "flash" in n and not any(x in n for x in ("lite", "tts", "live", "audio", "image", "embed", "transcribe"))
                     and n not in picks), reverse=True)
     picks += extra
-    _gemini_model_cache = picks or ["gemini-2.5-flash"]
+    # last resort: lighter models (faster, less accurate) so a busy day never stops the demo
+    picks += sorted((n for n in available if "flash-lite" in n and "preview" not in n), reverse=True)
+    if os.environ.get("GEMINI_MODEL"):
+        first = os.environ["GEMINI_MODEL"]
+        picks = [first] + [p for p in picks if p != first]
+    _gemini_model_cache = picks or ["gemini-3.5-flash-lite"]
     print(f"[llm] Gemini models usable by this key, best first: {_gemini_model_cache[:6]}", flush=True)
     return _gemini_model_cache
 

@@ -9,6 +9,9 @@ on:
       only:
         description: "Vendor keys to test, e.g. A,B (blank = all)"
         default: ""
+      model:
+        description: "Preferred model name (blank = automatic)"
+        default: ""
   push:
     paths:
       - "quotedesk/**"
@@ -26,7 +29,7 @@ concurrency:
 jobs:
   eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -45,6 +48,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           WANT: ${{ github.event.inputs.provider || 'gemini' }}
           ONLY: ${{ github.event.inputs.only || '' }}
+          GEMINI_MODEL: ${{ github.event.inputs.model || '' }}
         run: |
           if [ "$WANT" != "both" ] && [ "$WANT" != "$LLM_PROVIDER" ]; then echo "skipping $LLM_PROVIDER"; exit 0; fi
           if [ "$LLM_PROVIDER" = "gemini" ] && [ -z "$GEMINI_API_KEY" ]; then echo "No GEMINI_API_KEY secret"; exit 0; fi
