@@ -1,0 +1,15 @@
+{
+  "provider": "gemini",
+  "settings": {
+    "fx": "{'USD': 88.5, 'EUR': 95.0}",
+    "fx_note": "RBI reference rate assumed for 01-Oct-2026",
+    "default_gst": "18.0",
+    "deadline": "2026-10-01 18:00:00+05:30",
+    "evaluation_date": "2026-10-06",
+    "required_payment_days": "60",
+    "min_validity_days": "90",
+    "outlier_low": "0.4",
+    "outlier_high": "2.5"
+  },
+  "vendors": {}
+}
