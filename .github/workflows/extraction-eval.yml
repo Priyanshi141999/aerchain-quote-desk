@@ -16,6 +16,13 @@ on:
       - "data/**"
       - ".github/workflows/extraction-eval.yml"
 
+permissions:
+  contents: write
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   eval:
     runs-on: ubuntu-latest
@@ -42,8 +49,25 @@ jobs:
           if [ "$WANT" != "both" ] && [ "$WANT" != "$LLM_PROVIDER" ]; then echo "skipping $LLM_PROVIDER"; exit 0; fi
           if [ "$LLM_PROVIDER" = "gemini" ] && [ -z "$GEMINI_API_KEY" ]; then echo "No GEMINI_API_KEY secret"; exit 0; fi
           if [ "$LLM_PROVIDER" = "claude" ] && [ -z "$ANTHROPIC_API_KEY" ]; then echo "No ANTHROPIC_API_KEY secret"; exit 0; fi
-          python eval/run_eval.py --only "$ONLY"
+          mkdir -p eval/out
+          set -o pipefail
+          python eval/run_eval.py --only "$ONLY" 2>&1 | tee eval/out/run_log_${LLM_PROVIDER}.txt || {
+            echo "::error title=Eval failed::$(tail -c 1500 eval/out/run_log_${LLM_PROVIDER}.txt | tr '\n' ' ')"; exit 1; }
           cat eval/out/report_${LLM_PROVIDER}.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Save results to the eval-results branch
+        if: always()
+        env:
+          P: ${{ matrix.provider }}
+        run: |
+          [ -d eval/out ] && [ -n "$(ls -A eval/out 2>/dev/null)" ] || exit 0
+          mkdir -p /tmp/res && cp -r eval/out/* /tmp/res/
+          git config user.name "eval-bot"; git config user.email "eval-bot@users.noreply.github.com"
+          git fetch origin eval-results 2>/dev/null && git checkout -B eval-results origin/eval-results || git checkout --orphan eval-results
+          git rm -rq --cached . 2>/dev/null || true
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name results -exec rm -rf {} +
+          mkdir -p results/$P && rm -rf results/$P/* && cp -r /tmp/res/* results/$P/
+          echo "${{ github.sha }} $(date -u)" > results/$P/RUN.txt
+          git add results && git commit -qm "eval results $P ${{ github.sha }}" && git push -q origin eval-results || echo "nothing to push"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
