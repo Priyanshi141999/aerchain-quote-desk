@@ -50,6 +50,9 @@ def normalize_line(L: dict, item: dict, terms: dict, prev: dict[int, dict]) -> d
            "confidence": conf, "source": L.get("source") or {}, "as_written": L.get("price_as_written"),
            "vendor_description": L.get("vendor_description"), "reading_notes": L.get("reading_notes")}
 
+    if status == "refers_to_previous_contract" and L.get("price_value") is not None:
+        status = "quoted"  # an explicit price always beats a reference to an old contract
+        flags.append(flag("status_corrected", "info", "AI marked this as 'same as last year' but also read an explicit price; the explicit price is used."))
     if status == "refers_to_previous_contract":
         p = prev.get(item["id"])
         if not p:

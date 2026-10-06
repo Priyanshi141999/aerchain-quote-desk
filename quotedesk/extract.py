@@ -32,7 +32,12 @@ ABSOLUTE RULES
 7. If two documents from the same vendor contradict each other (e.g. email says freight extra, sheet says
    freight included), report it in "conflicts". Do not silently pick one.
 8. If the vendor refers to something outside their documents (e.g. "rest same as last year", "as per previous
-   contract"), set status "refers_to_previous_contract" on the affected lines and quote the phrase.
+   contract"), set status "refers_to_previous_contract" ONLY on lines that get NO explicit price, and quote the
+   phrase. A line that has an explicit price (including a per-kg rate) is "quoted", never a reference.
+   A rate stated for one grade (e.g. "42/kg for the 5-ply") applies only to lines of exactly that grade
+   (5-ply); lines of other grades (2-ply, 7-ply...) fall under the vendor's "rest" phrase instead.
+   If the vendor answers the questionnaire by reference ("same as last year", "you have our documents"),
+   that is NOT an answer: set answered=false and meets_requirement="not_answered" for those questions.
 9. If one price is given for several RFQ lines together, put it on each line and list the others in
    "shared_price_with_lines".
 10. Quote "source.quote" verbatim, at most 20 words, from where the value appears. For images, describe the

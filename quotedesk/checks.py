@@ -107,6 +107,11 @@ def qualification(ex: dict, questions: dict, vendor_name: str) -> dict:
         a = answers.get(q["id"], {})
         status = a.get("meets_requirement") or "not_answered"
         reason = a.get("reason") or ""
+        by_ref = re.search(r"same as (last|previous) year|already have|have all our documents|as per (earlier|previous)",
+                           (a.get("answer_summary") or "") + " " + reason, re.I)
+        if by_ref and status != "no":
+            status, reason = "not_answered", "Answered by reference to an earlier submission; no evidence for this RFQ."
+            a = {**a, "answered": False}
         if not a.get("answered", False) and status != "no":
             status, reason = "not_answered", reason or "No answer given."
         res[q["id"]] = {"status": status, "reason": reason, "answer": a.get("answer_summary"), "must_pass": q["must_pass"]}
