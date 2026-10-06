@@ -180,6 +180,56 @@ def _render(result) -> str:
         return str(result)[:6000]
 
 
+NUM = re.compile(r"(?<![A-Za-z0-9])(?:₹\s?)?(\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(crore|cr|lakh|lakhs|l|%)?(?![A-Za-z0-9])", re.I)
+
+
+def _numbers_in(obj, acc=None):
+    acc = acc if acc is not None else set()
+    if isinstance(obj, pd.DataFrame):
+        for v in obj.select_dtypes("number").to_numpy().ravel():
+            if pd.notna(v):
+                acc.add(float(v))
+        for c in obj.columns:
+            if obj[c].dtype == object:
+                for v in obj[c].dropna().astype(str):
+                    _numbers_in(v, acc)
+    elif isinstance(obj, pd.Series):
+        _numbers_in(obj.reset_index(), acc)
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            _numbers_in(v, acc); _numbers_in(str(k), acc)
+    elif isinstance(obj, (list, tuple, set)):
+        for v in obj:
+            _numbers_in(v, acc)
+    elif isinstance(obj, (int, float, np.integer, np.floating)) and not isinstance(obj, bool):
+        if pd.notna(obj):
+            acc.add(float(obj))
+    elif isinstance(obj, str):
+        for m in NUM.finditer(obj):
+            acc.add(float(m.group(1).replace(",", "")))
+    return acc
+
+
+def verify_numbers(answer: str, result, question: str = "") -> dict:
+    """Check that every figure in the written answer can be found in the computed result (or the question)."""
+    known = _numbers_in(result)
+    known |= _numbers_in(question)
+    known |= {abs(k) for k in known}
+    unverified, checked = [], 0
+    for m in NUM.finditer(answer or ""):
+        raw, unit = m.group(1), (m.group(2) or "").lower()
+        x = float(raw.replace(",", ""))
+        if x <= 31 and not unit and "." not in raw:   # line numbers, counts of lines, small integers
+            continue
+        mult = {"crore": 1e7, "cr": 1e7, "lakh": 1e5, "lakhs": 1e5, "l": 1e5}.get(unit, 1)
+        val = x * mult
+        checked += 1
+        tol = 0.006 * abs(val) if mult > 1 else max(0.011, 0.0005 * abs(val))
+        if not any(abs(val - k) <= tol or abs(x - k) <= 0.011 for k in known):
+            unverified.append(m.group(0).strip())
+    return {"checked": checked, "unverified": unverified}
+
+
 def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict], history: list[dict] | None = None) -> dict:
     L, V, I = _safe_frames(lines, vendors, items)
     hist = ""
@@ -198,5 +248,6 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
     ans = complete_json(ANSWER_SYSTEM, [Part(text=(
         f"QUESTION: {question}\nINTERPRETATION: {plan.get('interpretation')}\n"
         f"ASSUMPTIONS: {plan.get('assumptions')}\nCOMPUTED RESULTS:\n{computed}"))], max_tokens=3000).data
+    check = verify_numbers(ans.get("answer_markdown", ""), out.get("result"), question)
     return {"question": question, "plan": plan, "result": out.get("result"), "fig": out.get("fig"),
-            "export": out.get("export"), "error": out.get("error"), "answer": ans}
+            "export": out.get("export"), "error": out.get("error"), "answer": ans, "number_check": check}

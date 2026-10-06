@@ -378,14 +378,14 @@ elif page.startswith("4"):
     st.header("Needs your attention")
     st.caption("Everything the system was unsure about, or that could change the award, worst first. Nothing here was silently decided for you.")
     Q = attention_queue(R, L)
-    done = sum(1 for i, x in enumerate(Q) if f"{x['vendor']}|{x['line']}|{x['code']}" in ss.acks)
+    done = sum(1 for i, x in enumerate(Q) if f"{x['vendor']}|{x['line']}|{x['code']}|{i}" in ss.acks)
     st.progress(done / max(len(Q), 1), text=f"{done} of {len(Q)} reviewed")
     sev_f = st.multiselect("Show", ["blocker", "warning"], default=["blocker", "warning"],
                            format_func=lambda s: f"{SEV_ICON[s]} {s}s")
-    for x in Q:
+    for qi, x in enumerate(Q):
         if x["severity"] not in sev_f:
             continue
-        key = f"{x['vendor']}|{x['line']}|{x['code']}"
+        key = f"{x['vendor']}|{x['line']}|{x['code']}|{qi}"
         acked = key in ss.acks
         c1, c2 = st.columns([8, 2])
         where = f" · line {x['line']}" if x["line"] else ""
@@ -416,6 +416,13 @@ elif page.startswith("5"):
             st.markdown(h["q"])
         with st.chat_message("assistant"):
             st.markdown(h["answer"])
+            nc = h.get("number_check") or {}
+            if nc.get("checked"):
+                if nc["unverified"]:
+                    st.warning(f"⚠️ {len(nc['unverified'])} of {nc['checked']} figures could not be traced to the calculation: "
+                               + ", ".join(nc["unverified"]) + ". Treat them with caution.")
+                else:
+                    st.caption(f"✓ All {nc['checked']} figures in this answer trace back to the computed results.")
             if h.get("caveats"):
                 st.markdown("**Caveats:** " + " · ".join(h["caveats"]))
             if h.get("fig") is not None:
@@ -449,7 +456,8 @@ elif page.startswith("5"):
                     tbl = res if isinstance(res, pd.DataFrame) else (res.reset_index() if isinstance(res, pd.Series) else None)
                     ss.chat.append({"q": q, "answer": out["answer"].get("answer_markdown", ""), "caveats": out["answer"].get("caveats", []),
                                     "followups": out["answer"].get("followups", []), "plan": out["plan"], "fig": out["fig"],
-                                    "table": tbl, "export": out.get("export"), "error": out.get("error")})
+                                    "table": tbl, "export": out.get("export"), "error": out.get("error"),
+                                    "number_check": out.get("number_check")})
                     log("Analyst question", q)
                 except Exception as e:
                     st.error(f"The AI call failed: {e}")
