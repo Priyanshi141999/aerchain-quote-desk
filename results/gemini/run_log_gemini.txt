@@ -1,9 +1,13 @@
 Provider: gemini
 [llm] Gemini models usable by this key, best first: ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview']
-  B_deccan: 23s (gemini-3.5-flash-lite)
+[llm] gemini-3.5-flash-lite attempt 1 failed (error): Expecting property name enclosed in double quotes: line 759 column 9 (char 21989)
+  C_vijay: 90s (gemini-3.5-flash-lite)
+  D_sri_murugan: 41s (gemini-3.5-flash-lite)
+  E_annapurna: 39s (gemini-3.5-flash-lite)
 
-PRICES 29/30 (97%) | EDGE CASES 8/12
-  ❌ B: Line 13 typo flagged, excluded from ranking
+PRICES 65/90 (72%) | EDGE CASES 20/25
+  ❌ E: Revised 5-ply rate ₹44/kg used (line 4)
+  ❌ E: Per-kg converted with weight assumption
+  ❌ E: Questionnaire not answered → not qualified
   ❌ *: Qualification: A qualified
-  ❌ *: Qualification: C not qualified
-  ❌ *: Qualification: D conditional
+  ❌ *: Qualification: B not qualified
