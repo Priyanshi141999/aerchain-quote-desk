@@ -142,7 +142,8 @@ def normalize_line(L: dict, item: dict, terms: dict, prev: dict[int, dict]) -> d
         flags.append(flag("gst_removed", "info", f"Price included {rate:g}% GST; removed for like-for-like comparison."))
 
     if L.get("spec_deviation"):
-        flags.append(flag("spec_deviation", "blocker", f"Not like-for-like: {L['spec_deviation']}"))
+        flags.append(flag("spec_deviation", "blocker", f"Not like-for-like: {L['spec_deviation']}. Excluded from 'cheapest' until the buyer accepts the deviation."))
+        out["excluded_from_ranking"] = True
     if L.get("shared_price_with_lines"):
         flags.append(flag("merged_lines", "warning",
                           f"One price given for lines {sorted(set([item['id']] + L['shared_price_with_lines']))} together."))

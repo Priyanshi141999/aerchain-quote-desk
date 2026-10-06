@@ -12,12 +12,6 @@ on:
       model:
         description: "Preferred model name (blank = automatic)"
         default: ""
-  push:
-    paths:
-      - "quotedesk/**"
-      - "eval/**"
-      - "data/**"
-      - ".github/workflows/extraction-eval.yml"
 
 permissions:
   contents: write

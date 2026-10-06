@@ -5,3 +5,5 @@ __pycache__/
 .streamlit/secrets.toml
 eval/out/*mock*
 .DS_Store
+data/extractions/*mock*
+data/extractions/results_*.json
