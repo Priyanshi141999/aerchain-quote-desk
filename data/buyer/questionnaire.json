@@ -1,0 +1,76 @@
+{
+  "rfq_no": "KHA/PKG/RFQ/2026-27/014",
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "Is your manufacturing unit ISO 9001:2015 certified? Attach a valid certificate.",
+      "type": "yes_no+document",
+      "must_pass": true,
+      "pass_rule": "Yes, with a certificate valid on the RFQ deadline and issued to the bidding legal entity"
+    },
+    {
+      "id": "Q2",
+      "text": "Will you provide lot-wise test reports for Box Compression Test (BCT), bursting strength and moisture content?",
+      "type": "yes_no",
+      "must_pass": true,
+      "pass_rule": "Yes (unconditional)"
+    },
+    {
+      "id": "Q3",
+      "text": "Monthly corrugation capacity (metric tonnes) and current utilisation (%).",
+      "type": "number",
+      "must_pass": false,
+      "pass_rule": "Info only; flag if our monthly volume exceeds 25% of free capacity"
+    },
+    {
+      "id": "Q4",
+      "text": "Standard lead time from PO to delivery at Hosur (days).",
+      "type": "number",
+      "must_pass": false,
+      "pass_rule": "Preferred <= 21 days"
+    },
+    {
+      "id": "Q5",
+      "text": "Kraft paper source: virgin / recycled / mixed. Is FSC certified paper available on request?",
+      "type": "text",
+      "must_pass": false,
+      "pass_rule": "Info only"
+    },
+    {
+      "id": "Q6",
+      "text": "Do you have in-house flexo printing up to 4 colours?",
+      "type": "yes_no",
+      "must_pass": false,
+      "pass_rule": "Required for lines 3 and 20 (4-colour print)"
+    },
+    {
+      "id": "Q7",
+      "text": "Years of experience supplying consumer durables / appliance OEMs. Name two current customers.",
+      "type": "text",
+      "must_pass": false,
+      "pass_rule": "Info only"
+    },
+    {
+      "id": "Q8",
+      "text": "Do you accept our standard payment terms of 60 days from invoice?",
+      "type": "yes_no",
+      "must_pass": true,
+      "pass_rule": "Yes"
+    },
+    {
+      "id": "Q9",
+      "text": "GSTIN of the billing entity.",
+      "type": "text",
+      "must_pass": false,
+      "pass_rule": "Must be present for PO creation"
+    },
+    {
+      "id": "Q10",
+      "text": "Will you replace rejected lots within 7 days at your cost, including freight?",
+      "type": "yes_no",
+      "must_pass": false,
+      "pass_rule": "Preferred yes"
+    }
+  ],
+  "qualification_rule": "A vendor is QUALIFIED only if every must-pass question (Q1, Q2, Q8) passes with evidence."
+}

@@ -1,0 +1,52 @@
+name: Extraction accuracy test
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "gemini, claude or both"
+        default: "gemini"
+      only:
+        description: "Vendor keys to test, e.g. A,B (blank = all)"
+        default: ""
+  push:
+    paths:
+      - "quotedesk/**"
+      - "eval/**"
+      - "data/**"
+      - ".github/workflows/extraction-eval.yml"
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [gemini, claude]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run extraction and score against the answer key
+        env:
+          LLM_PROVIDER: ${{ matrix.provider }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WANT: ${{ github.event.inputs.provider || 'gemini' }}
+          ONLY: ${{ github.event.inputs.only || '' }}
+        run: |
+          if [ "$WANT" != "both" ] && [ "$WANT" != "$LLM_PROVIDER" ]; then echo "skipping $LLM_PROVIDER"; exit 0; fi
+          if [ "$LLM_PROVIDER" = "gemini" ] && [ -z "$GEMINI_API_KEY" ]; then echo "No GEMINI_API_KEY secret"; exit 0; fi
+          if [ "$LLM_PROVIDER" = "claude" ] && [ -z "$ANTHROPIC_API_KEY" ]; then echo "No ANTHROPIC_API_KEY secret"; exit 0; fi
+          python eval/run_eval.py --only "$ONLY"
+          cat eval/out/report_${LLM_PROVIDER}.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-${{ matrix.provider }}
+          path: eval/out/
+          if-no-files-found: ignore
