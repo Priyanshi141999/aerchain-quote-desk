@@ -443,8 +443,10 @@ elif page.startswith("5"):
             with st.spinner("Planning the analysis, running it on the data, writing it up…"):
                 try:
                     out = analyst.ask(q, L, V, items, ss.chat)
-                    tbl = out["result"] if isinstance(out["result"], pd.DataFrame) else (
-                        out["result"].reset_index() if isinstance(out["result"], pd.Series) else None)
+                    res = out["result"]
+                    if isinstance(res, dict):
+                        res = next((v for v in res.values() if isinstance(v, (pd.DataFrame, pd.Series))), None)
+                    tbl = res if isinstance(res, pd.DataFrame) else (res.reset_index() if isinstance(res, pd.Series) else None)
                     ss.chat.append({"q": q, "answer": out["answer"].get("answer_markdown", ""), "caveats": out["answer"].get("caveats", []),
                                     "followups": out["answer"].get("followups", []), "plan": out["plan"], "fig": out["fig"],
                                     "table": tbl, "export": out.get("export"), "error": out.get("error")})

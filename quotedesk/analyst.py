@@ -34,6 +34,16 @@ DATA AVAILABLE TO YOUR CODE (already loaded as pandas DataFrames):
 - `items`: the 30 RFQ lines (id, name, form, board, dims, bf, print_colours, annual_qty, uom, weight_kg).
 - Libraries: pd, np, px (plotly.express). Do NOT import anything. Do not read or write files.
 
+VETTED HELPERS (use them for award scenarios instead of writing your own arithmetic):
+- cheapest_split(lines, vendors_allowed=None, basis="price_inr", include_suspect=False) -> DataFrame with one row
+  per RFQ line: line, item, annual_qty, n_eligible, winner, winner_name, unit_price, annual_value, runner_up,
+  runner_up_price. Lines with no eligible quote have winner=None (report them!).
+- single_vendor(lines, vendor, basis="price_inr", discount_pct=0) -> dict with total_reliable_lines,
+  total_after_discount, lines_missing, lines_suspect_excluded.
+- same_lines_comparison(split_df, single_vendor_result, lines, basis="price_inr") -> dict comparing both
+  scenarios over exactly the same lines, with lines_left_out. ALWAYS use this when comparing a split with a
+  single-vendor award, so the two totals cover the same goods.
+
 RULES
 - "Qualified" means qualification == "qualified" unless the user says otherwise; mention "conditional"
   vendors separately when they change the answer.
@@ -46,13 +56,20 @@ RULES
   "assumptions".
 - Your code MUST assign `result` (a DataFrame, Series, dict or number) and MAY assign `fig` (a plotly figure)
   when a chart would help, and MAY assign `export` (a DataFrame) if the user asks for a download/export.
+- When the answer depends on the definition of "qualified", ALSO compute the answer including "conditional"
+  vendors and put both in `result`, so the buyer sees what the conditional vendor would change.
+- `result` must contain EVERY number the answer will need, including totals, differences and counts, as explicit
+  values. The writer of the final answer cannot do arithmetic. Best shape: a dict like
+  {"summary": {"total_inr": ..., "lines_without_eligible_quote": [...], ...}, "table": <DataFrame>}.
 - Keep `result` compact (<= 40 rows). Round money to 2 decimals for unit prices and 0 for totals.
 
 Return JSON: {"interpretation": str, "assumptions": [str], "code": str, "wants_chart": bool}
 """
 
 ANSWER_SYSTEM = """You are a senior procurement analyst writing to the buyer (and their VP). Write the answer
-using ONLY the computed results provided. Every number you mention must appear in the results. Be concise and
+using ONLY the computed results provided. Every number you mention must appear VERBATIM in the results (you may
+reformat it as lakh/crore). NEVER add, subtract or total numbers yourself; if a figure you want is not in the
+results, leave it out and say it was not computed. Be concise and
 decision-oriented: lead with the answer, then the 2-4 facts that matter, then caveats that could change the
 decision (unqualified vendors, suspected errors, missing lines, unknown freight, conditional discounts, late or
 expired offers). Use INR with Indian digit grouping (₹1,23,45,678) or lakh/crore where natural.
@@ -60,6 +77,59 @@ If the results are empty or show an error, say plainly what could not be answere
 
 Return JSON: {"answer_markdown": str, "caveats": [str], "followups": [str]}  (2-3 short follow-up questions)
 """
+
+
+
+# ---------------------------------------------------------------- vetted building blocks
+def cheapest_split(lines: pd.DataFrame, vendors_allowed=None, basis: str = "price_inr", include_suspect: bool = False) -> pd.DataFrame:
+    """Cheapest eligible vendor per RFQ line. Lines with no eligible quote are KEPT with winner=None."""
+    df = lines.copy()
+    if vendors_allowed is not None:
+        df = df[df.vendor.isin(list(vendors_allowed))]
+    elig = df[df[basis].notna()]
+    if not include_suspect:
+        elig = elig[~elig.excluded_from_ranking]
+    out = []
+    for ln in sorted(lines.line.unique()):
+        base = lines[lines.line == ln].iloc[0]
+        cand = elig[elig.line == ln].sort_values(basis)
+        row = {"line": ln, "item": base["item"], "annual_qty": base["annual_qty"], "n_eligible": len(cand)}
+        if len(cand):
+            w = cand.iloc[0]
+            row.update(winner=w.vendor, winner_name=w.vendor_name, unit_price=round(w[basis], 2),
+                       annual_value=round(w[basis] * base["annual_qty"], 0),
+                       runner_up=cand.iloc[1].vendor if len(cand) > 1 else None,
+                       runner_up_price=round(cand.iloc[1][basis], 2) if len(cand) > 1 else None)
+        else:
+            row.update(winner=None, winner_name=None, unit_price=None, annual_value=None, runner_up=None, runner_up_price=None)
+        out.append(row)
+    return pd.DataFrame(out)
+
+
+def single_vendor(lines: pd.DataFrame, vendor: str, basis: str = "price_inr", discount_pct: float = 0.0) -> dict:
+    """Award everything to one vendor. Reports exactly which lines are missing or suspect instead of hiding them."""
+    v = lines[lines.vendor == vendor]
+    priced = v[v[basis].notna()]
+    ok = priced[~priced.excluded_from_ranking]
+    suspect = priced[priced.excluded_from_ranking]
+    total_ok = float((ok[basis] * ok.annual_qty).sum())
+    return {"vendor": vendor, "lines_priced_reliably": int(len(ok)), "total_reliable_lines": round(total_ok, 0),
+            "total_after_discount": round(total_ok * (1 - discount_pct / 100), 0), "discount_pct": discount_pct,
+            "lines_missing": sorted(v[v[basis].isna()].line.tolist()),
+            "lines_suspect_excluded": sorted(suspect.line.tolist()),
+            "note": "Totals cover only reliable lines; compare with other scenarios on the SAME lines."}
+
+
+def same_lines_comparison(split_df: pd.DataFrame, vendor_result: dict, lines: pd.DataFrame, basis: str = "price_inr") -> dict:
+    """Compare a split with a single-vendor award over exactly the lines both can cover."""
+    v = lines[(lines.vendor == vendor_result["vendor"]) & lines[basis].notna() & (~lines.excluded_from_ranking)]
+    common = sorted(set(v.line) & set(split_df[split_df.winner.notna()].line))
+    split_total = float(split_df[split_df.line.isin(common)].annual_value.sum())
+    vend_total = float((v[v.line.isin(common)][basis] * v[v.line.isin(common)].annual_qty).sum()) * (1 - vendor_result.get("discount_pct", 0) / 100)
+    return {"lines_compared": len(common), "lines_left_out": sorted(set(range(1, 31)) - set(common)),
+            "split_total": round(split_total, 0), "vendor_total": round(vend_total, 0),
+            "vendor_minus_split": round(vend_total - split_total, 0)}
+
 
 BANNED = re.compile(r"\b(import|open|exec|eval|compile|__\w+__|globals|locals|getattr|setattr|delattr|os\.|sys\.|subprocess|input)\b")
 
@@ -79,7 +149,8 @@ def run_code(code: str, L, V, I) -> dict:
     if BANNED.search(code):
         return {"error": "Code used a disallowed operation (imports, files or system access)."}
     import plotly.express as px
-    env = {"pd": pd, "np": np, "px": px, "lines": L.copy(), "vendors": V.copy(), "items": I.copy()}
+    env = {"pd": pd, "np": np, "px": px, "lines": L.copy(), "vendors": V.copy(), "items": I.copy(),
+           "cheapest_split": cheapest_split, "single_vendor": single_vendor, "same_lines_comparison": same_lines_comparison}
     safe_builtins = {k: __builtins__[k] if isinstance(__builtins__, dict) else getattr(__builtins__, k)
                      for k in ("len", "range", "min", "max", "sum", "sorted", "round", "abs", "list", "dict", "set",
                                "tuple", "str", "int", "float", "bool", "enumerate", "zip", "any", "all", "isinstance",
@@ -94,6 +165,11 @@ def run_code(code: str, L, V, I) -> dict:
 
 
 def _render(result) -> str:
+    if isinstance(result, dict) and any(isinstance(v, (pd.DataFrame, pd.Series)) for v in result.values()):
+        parts = []
+        for k, v in result.items():
+            parts.append(f"--- {k} ---\n{_render(v)}")
+        return "\n".join(parts)[:9000]
     if isinstance(result, pd.DataFrame):
         return result.head(40).to_csv(index=False)
     if isinstance(result, pd.Series):
