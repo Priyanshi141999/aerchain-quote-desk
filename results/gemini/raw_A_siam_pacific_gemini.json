@@ -1,0 +1,926 @@
+{
+  "extraction": {
+    "vendor": {
+      "legal_name": "Siam Pacific Packaging (India) Pvt Ltd",
+      "gstin": "33AAKCS8812R1ZQ",
+      "contact_person": "Arvind Menon",
+      "quote_reference": "SPPI/BLR/OF/26-0917",
+      "quote_date": "2026-09-29"
+    },
+    "lines": [
+      {
+        "rfq_line": 1,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-107",
+        "vendor_description": "3 Ply RSC Box 9.1\" x 7.5\" x 9.8\" ID, 1C Flexo",
+        "price_as_written": "104.8 (<=100k) / 100.6 (>100k)",
+        "price_value": 104.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [
+          {
+            "min_qty": null,
+            "max_qty": 100000,
+            "price_value": 104.8
+          },
+          {
+            "min_qty": 100001,
+            "max_qty": null,
+            "price_value": 100.6
+          }
+        ],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 14, Columns H & I",
+          "quote": "104.8"
+        },
+        "confidence": "high",
+        "reading_notes": "Slab pricing applies based on cumulative annual off-take."
+      },
+      {
+        "rfq_line": 2,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-114",
+        "vendor_description": "3 Ply RSC Box 12.2\" x 5.9\" x 6.7\" ID, 2C Flexo",
+        "price_as_written": "90.8 (<=100k) / 87.2 (>100k)",
+        "price_value": 90.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [
+          {
+            "min_qty": null,
+            "max_qty": 100000,
+            "price_value": 90.8
+          },
+          {
+            "min_qty": 100001,
+            "max_qty": null,
+            "price_value": 87.2
+          }
+        ],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 16, Columns H & I",
+          "quote": "90.8"
+        },
+        "confidence": "high",
+        "reading_notes": "Slab pricing applies based on cumulative annual off-take."
+      },
+      {
+        "rfq_line": 3,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-121",
+        "vendor_description": "3 Ply RSC Box 10.2\" x 4.3\" x 8.7\" ID, 4C Flexo",
+        "price_as_written": "84.8",
+        "price_value": 84.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 17, Column H",
+          "quote": "84.8"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 4,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-128",
+        "vendor_description": "5 Ply RSC Carton 15.4\" x 11.8\" x 14.2\" ID, 2C Flexo",
+        "price_as_written": "446.4",
+        "price_value": 446.4,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 32, Column H",
+          "quote": "446.4"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 5,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-135",
+        "vendor_description": "5 Ply RSC Carton 16.5\" x 12.6\" x 15.4\" ID, 2C Flexo",
+        "price_as_written": "511.7",
+        "price_value": 511.7,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 30, Column H",
+          "quote": "511.7"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 6,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-142",
+        "vendor_description": "5 Ply RSC Carton 25.6\" x 16.9\" x 16.1\" ID, 1C Flexo",
+        "price_as_written": "860.8",
+        "price_value": 860.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 27, Column H",
+          "quote": "860.8"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 7,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-149",
+        "vendor_description": "5 Ply RSC Carton 16.1\" x 13.4\" x 4.7\" ID, 2C Flexo",
+        "price_as_written": "339.2",
+        "price_value": 339.2,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [
+          {
+            "value": "362.9",
+            "why": "Row 36 marked as OLD RATE - superseded in hidden row"
+          }
+        ],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 37, Column H",
+          "quote": "339.2"
+        },
+        "confidence": "high",
+        "reading_notes": "Row 36 was hidden and contained an older rate of 362.9."
+      },
+      {
+        "rfq_line": 8,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-156",
+        "vendor_description": "3 Ply RSC Box 11.0\" x 10.2\" x 9.8\" ID, 2C Flexo",
+        "price_as_written": "156.9",
+        "price_value": 156.9,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 12, Column H",
+          "quote": "156.9"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 9,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-163",
+        "vendor_description": "5 Ply RSC Carton 13.0\" x 12.2\" x 11.4\" ID, 2C Flexo",
+        "price_as_written": "376.5",
+        "price_value": 376.5,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 35, Column H",
+          "quote": "376.5"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 10,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-170",
+        "vendor_description": "5 Ply RSC Carton 18.9\" x 13.0\" x 22.0\" ID, 2C Flexo",
+        "price_as_written": "691.4",
+        "price_value": 691.4,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 29, Column H",
+          "quote": "691.4"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 11,
+        "status": "quoted",
+        "vendor_ref": "SPP-7R-177",
+        "vendor_description": "7 Ply Heavy Duty RSC 25.2\" x 18.1\" x 41.3\" ID, 1C Flexo",
+        "price_as_written": "2454.5",
+        "price_value": 2454.5,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 41, Column H",
+          "quote": "2454.5"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 12,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-184",
+        "vendor_description": "5 Ply RSC Carton 49.2\" x 7.1\" x 4.3\" ID, 1C Flexo",
+        "price_as_written": "391.8",
+        "price_value": 391.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 34, Column H",
+          "quote": "391.8"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 13,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-191",
+        "vendor_description": "5 Ply RSC Carton 15.0\" x 15.0\" x 8.7\" ID, 1C Flexo",
+        "price_as_written": "434.6",
+        "price_value": 434.6,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 33, Column H",
+          "quote": "434.6"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 14,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-198",
+        "vendor_description": "5 Ply RSC Carton 17.3\" x 9.4\" x 18.9\" ID, 1C Flexo",
+        "price_as_written": "466.6",
+        "price_value": 466.6,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 31, Column H",
+          "quote": "466.6"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 15,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-205",
+        "vendor_description": "3 Ply RSC Box 12.6\" x 7.9\" x 8.7\" ID, 2C Flexo",
+        "price_as_written": "126",
+        "price_value": 126,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 13, Column H",
+          "quote": "126"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 16,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-212",
+        "vendor_description": "3 Ply RSC Box 11.8\" x 7.9\" x 5.9\" ID, Plain",
+        "price_as_written": "90.8 (<=100k) / 87.2 (>100k)",
+        "price_value": 90.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [
+          {
+            "min_qty": null,
+            "max_qty": 100000,
+            "price_value": 90.8
+          },
+          {
+            "min_qty": 100001,
+            "max_qty": null,
+            "price_value": 87.2
+          }
+        ],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 15, Columns H & I",
+          "quote": "90.8"
+        },
+        "confidence": "high",
+        "reading_notes": "Slab pricing applies based on cumulative annual off-take."
+      },
+      {
+        "rfq_line": 17,
+        "status": "quoted",
+        "vendor_ref": "SPP-3R-219",
+        "vendor_description": "3 Ply RSC Box 17.7\" x 11.8\" x 9.8\" ID, Plain",
+        "price_as_written": "211.8",
+        "price_value": 211.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 11, Column H",
+          "quote": "211.8"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 18,
+        "status": "quoted",
+        "vendor_ref": "SPP-5R-226",
+        "vendor_description": "5 Ply RSC Carton 23.6\" x 15.7\" x 15.7\" ID, 1C Flexo",
+        "price_as_written": "748.2",
+        "price_value": 748.2,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 28, Column H",
+          "quote": "748.2"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 19,
+        "status": "quoted",
+        "vendor_ref": "SPP-7R-233",
+        "vendor_description": "7 Ply Heavy Duty RSC 32.3\" x 25.2\" x 16.9\" ID, 1C Flexo",
+        "price_as_written": "2274",
+        "price_value": 2274,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 42, Column H",
+          "quote": "2274"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 20,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-240",
+        "vendor_description": "E-Flute Die Cut Mailer, 4C print, 9.8\"x7.1\"x2.8\"",
+        "price_as_written": "85.5",
+        "price_value": 85.5,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 24, Column H",
+          "quote": "85.5"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 21,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-247",
+        "vendor_description": "Partition 12 Cell (for 18.1\"x15\"x10.2\" box)",
+        "price_as_written": "109.9",
+        "price_value": 109.9,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "set",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 20, Column H",
+          "quote": "109.9"
+        },
+        "confidence": "high",
+        "reading_notes": "Price is per 1000 sets."
+      },
+      {
+        "rfq_line": 22,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-254",
+        "vendor_description": "Partition 6 Cell (for 17.7\"x11.8\"x9.8\" box)",
+        "price_as_written": "71.3",
+        "price_value": 71.3,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "set",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 22, Column H",
+          "quote": "71.3"
+        },
+        "confidence": "high",
+        "reading_notes": "Price is per 1000 sets."
+      },
+      {
+        "rfq_line": 23,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-261",
+        "vendor_description": "Die Cut Jar Cradle, flat 20.5\"x18.9\"",
+        "price_as_written": "85.9",
+        "price_value": 85.9,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 21, Column H",
+          "quote": "85.9"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 24,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-268",
+        "vendor_description": "E-Flute Die Cut Insert, flat 22\"x16.5\"",
+        "price_as_written": "65.8",
+        "price_value": 65.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 23, Column H",
+          "quote": "65.8"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 25,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-275",
+        "vendor_description": "Corrugated Layer Pad 47.2\"x39.4\"",
+        "price_as_written": "300.9",
+        "price_value": 300.9,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 18, Column H",
+          "quote": "300.9"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 26,
+        "status": "quoted",
+        "vendor_ref": "SPP-3D-282",
+        "vendor_description": "Corrugated Layer Pad 31.5\"x23.6\"",
+        "price_as_written": "120",
+        "price_value": 120,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 19, Column H",
+          "quote": "120"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 27,
+        "status": "quoted",
+        "vendor_ref": "SPP-5D-289",
+        "vendor_description": "Corner Pad 5.9\"x5.9\" V-notch 5 Ply",
+        "price_as_written": "21.5",
+        "price_value": 21.5,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 38, Column H",
+          "quote": "21.5"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 28,
+        "status": "quoted",
+        "vendor_ref": "SPP-2D-296",
+        "vendor_description": "SF Roll 39.4\" wide x 164 ft",
+        "price_as_written": "USD 9.80 per roll",
+        "price_value": 9.8,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1,
+        "price_unit": "roll",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 47, Column J",
+          "quote": "USD 9.80 per roll"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 29,
+        "status": "quoted",
+        "vendor_ref": "SPP-2D-303",
+        "vendor_description": "SF Roll 47.2\" wide x 164 ft",
+        "price_as_written": "USD 11.75 per roll",
+        "price_value": 11.75,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1,
+        "price_unit": "roll",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 46, Column J",
+          "quote": "USD 11.75 per roll"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 30,
+        "status": "quoted",
+        "vendor_ref": "SPP-7D-310",
+        "vendor_description": "7 Ply Base Tray, flat 46.5\"x31.5\"",
+        "price_as_written": "695.4",
+        "price_value": 695.4,
+        "price_value_max": null,
+        "currency": "USD",
+        "price_per_quantity": 1000,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx",
+          "location": "Sheet: Offer, Row 43, Column H",
+          "quote": "695.4"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      }
+    ],
+    "commercial_terms": {
+      "freight": {
+        "basis": "extra_at_actuals",
+        "amount": null,
+        "amount_currency": null,
+        "per": null,
+        "truck_payload_kg": null,
+        "note": "Contradiction: Excel sheet says 'FOR Hosur plant, inclusive of freight and unloading' but cover email says 'Freight will be extra at actuals.'",
+        "source": "email.eml"
+      },
+      "gst_rate_percent": 18,
+      "payment_days": 60,
+      "payment_text": "60 days from date of invoice.",
+      "validity_text": "60 days from offer date.",
+      "validity_days": 60,
+      "valid_until": "2026-11-28",
+      "lead_time_days": 18,
+      "price_firmness": "Firm for 6 months; thereafter linked to IPPTA kraft index, reviewed quarterly.",
+      "currency_clause": "Prices quoted in USD. Invoicing in INR at RBI reference rate on invoice date. If INR/USD moves beyond +/-2% of 88.20, price revision to buyer's account.",
+      "discounts": [],
+      "one_time_charges": [
+        {
+          "description": "Printing plates and dies (first set)",
+          "amount": 0,
+          "per": "set",
+          "source": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx - Sheet: Offer, Row 56"
+        }
+      ],
+      "other_terms": [
+        "Supply quantity tolerance +/- 5% per schedule.",
+        "FSC certified board available at +6%."
+      ]
+    },
+    "questionnaire": [
+      {
+        "qid": "Q1",
+        "answered": true,
+        "answer_summary": "Yes. Certificate no. QMS/IN/48812, valid to 14-Feb-2028 (attached as separate PDF).",
+        "meets_requirement": "yes",
+        "reason": "ISO 9001:2015 certified with valid certificate until 14-Feb-2028.",
+        "source": "Sheet: Tech Questionnaire, Row 2"
+      },
+      {
+        "qid": "Q2",
+        "answered": true,
+        "answer_summary": "Yes, lot-wise BCT, burst and moisture reports with every dispatch.",
+        "meets_requirement": "yes",
+        "reason": "Unconditional agreement to provide reports.",
+        "source": "Sheet: Tech Questionnaire, Row 3"
+      },
+      {
+        "qid": "Q3",
+        "answered": true,
+        "answer_summary": "2,400 MT/month; current utilisation 72%.",
+        "meets_requirement": "yes",
+        "reason": "Information provided. Free capacity is 672 MT/month.",
+        "source": "Sheet: Tech Questionnaire, Row 4"
+      },
+      {
+        "qid": "Q4",
+        "answered": true,
+        "answer_summary": "18 days.",
+        "meets_requirement": "yes",
+        "reason": "18 days is within the preferred <= 21 days.",
+        "source": "Sheet: Tech Questionnaire, Row 5"
+      },
+      {
+        "qid": "Q5",
+        "answered": true,
+        "answer_summary": "Mixed (60% virgin). FSC certified board available at +6%.",
+        "meets_requirement": "yes",
+        "reason": "Information provided.",
+        "source": "Sheet: Tech Questionnaire, Row 6"
+      },
+      {
+        "qid": "Q6",
+        "answered": true,
+        "answer_summary": "Yes, 6-colour flexo and 4-colour offset lamination.",
+        "meets_requirement": "yes",
+        "reason": "Meets requirement for 4-colour print on lines 3 and 20.",
+        "source": "Sheet: Tech Questionnaire, Row 7"
+      },
+      {
+        "qid": "Q7",
+        "answered": true,
+        "answer_summary": "15 years in India. Customers include two leading kitchen-appliance and AC OEMs (names on NDA).",
+        "meets_requirement": "yes",
+        "reason": "Information provided.",
+        "source": "Sheet: Tech Questionnaire, Row 8"
+      },
+      {
+        "qid": "Q8",
+        "answered": true,
+        "answer_summary": "Accepted.",
+        "meets_requirement": "yes",
+        "reason": "Accepts standard 60 days payment terms.",
+        "source": "Sheet: Tech Questionnaire, Row 9"
+      },
+      {
+        "qid": "Q9",
+        "answered": true,
+        "answer_summary": "33AAKCS8812R1ZQ",
+        "meets_requirement": "yes",
+        "reason": "GSTIN provided.",
+        "source": "Sheet: Tech Questionnaire, Row 10"
+      },
+      {
+        "qid": "Q10",
+        "answered": true,
+        "answer_summary": "Yes, within 5 working days at our cost.",
+        "meets_requirement": "yes",
+        "reason": "Agrees to replace within 5 working days (better than the 7-day requirement).",
+        "source": "Sheet: Tech Questionnaire, Row 11"
+      }
+    ],
+    "certificates": [
+      {
+        "file": "SPPI_ISO9001_Certificate.pdf",
+        "standard": "ISO 9001:2015",
+        "certificate_holder": "Siam Pacific Packaging (India) Pvt Ltd",
+        "holder_address": "Plot B-7, SIPCOT Industrial Park, Sriperumbudur 602105, Tamil Nadu",
+        "certificate_no": "QMS/IN/48812",
+        "valid_from": "2019-02-15",
+        "valid_until": "2028-02-14"
+      }
+    ],
+    "conflicts": [
+      {
+        "topic": "freight",
+        "statement_a": "Price basis: FOR Hosur plant, inclusive of freight and unloading.",
+        "source_a": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx - Sheet: Terms & Conditions, Row 3",
+        "statement_b": "Freight will be extra at actuals.",
+        "source_b": "email.eml"
+      }
+    ],
+    "revisions": [
+      {
+        "what_changed": "Price for SPP-5R-149 (Line 7)",
+        "earlier": "362.9",
+        "later": "339.2",
+        "source": "SPPI_Offer_KHA_Corrugated_29Sep26.xlsx - Sheet: Offer, Rows 36 & 37"
+      }
+    ],
+    "references_outside_documents": [],
+    "suspicious_content": [],
+    "overall_notes": [
+      "The vendor has quoted all prices in USD. Invoicing is in INR at RBI reference rate on invoice date, subject to a +/-2% exchange rate variation clause.",
+      "There is a direct conflict regarding freight: the Excel sheet states freight is included, while the cover email states freight is extra at actuals.",
+      "Row 36 was hidden in the Excel sheet and contained an older rate of 362.9 for Line 7, which has been superseded by 339.2 in Row 37."
+    ]
+  },
+  "meta": {
+    "provider": "gemini",
+    "model": "gemini-3.5-flash",
+    "seconds": 183.1
+  }
+}

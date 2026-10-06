@@ -1,3 +1,78 @@
 Provider: gemini
-[llm] Gemini models usable by this key, best first: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash']
+[llm] Gemini models usable by this key, best first: ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash']
+[llm] gemini-3.6-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.8-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+  A_siam_pacific: 303s (gemini-3.5-flash)
+[llm] gemini-3.6-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
 [llm] gemini-3.8-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-2.5-flash attempt 1 failed (error): 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash is no longer available to new user
+[llm] gemini-omni-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+  B_deccan: FAILED - gemini: all models failed. gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on | gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message
+[llm] gemini-3.6-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.8-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-2.5-flash attempt 1 failed (error): 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash is no longer available to new user
+[llm] gemini-omni-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+  C_vijay: FAILED - gemini: all models failed. gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on | gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message
+[llm] gemini-3.6-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.8-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.5-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-2.5-flash attempt 1 failed (error): 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash is no longer available to new user
+[llm] gemini-omni-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+  D_sri_murugan: FAILED - gemini: all models failed. gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on | gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message
+[llm] gemini-3.6-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.8-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3.5-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3-flash-preview attempt 1 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-3-flash-preview attempt 2 failed (busy): 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[llm] gemini-2.5-flash attempt 1 failed (error): 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash is no longer available to new user
+[llm] gemini-omni-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-1.1-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+  E_annapurna: FAILED - gemini: all models failed. gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on | gemini-omni-flash-preview: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message
+
+PRICES 30/30 (100%) | EDGE CASES 6/9
+  ❌ *: Qualification: B not qualified
+  ❌ *: Qualification: C not qualified
+  ❌ *: Qualification: D conditional
