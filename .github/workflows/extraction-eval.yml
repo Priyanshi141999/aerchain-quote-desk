@@ -12,6 +12,9 @@ on:
       model:
         description: "Preferred model name (blank = automatic)"
         default: ""
+      task:
+        description: "extraction or analyst"
+        default: "extraction"
 
 permissions:
   contents: write
@@ -51,6 +54,9 @@ jobs:
           mkdir -p eval/out
           python eval/ping_models.py 2>&1 | grep -v AFC | tee eval/out/ping_${LLM_PROVIDER}.txt || true
           set -o pipefail
+          if [ "${{ github.event.inputs.task }}" = "analyst" ]; then
+            python eval/run_analyst.py 2>&1 | tee eval/out/run_log_analyst_${LLM_PROVIDER}.txt; exit 0
+          fi
           python eval/run_eval.py --only "$ONLY" 2>&1 | tee eval/out/run_log_${LLM_PROVIDER}.txt || {
             echo "::error title=Eval failed::$(tail -c 1500 eval/out/run_log_${LLM_PROVIDER}.txt | tr '\n' ' ')"; exit 1; }
           cat eval/out/report_${LLM_PROVIDER}.md >> "$GITHUB_STEP_SUMMARY"
