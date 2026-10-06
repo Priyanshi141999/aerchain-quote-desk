@@ -6,6 +6,7 @@ Writes eval/out/report_<provider>.md and prints a summary. The app itself never 
 from __future__ import annotations
 
 import argparse
+import os
 import csv
 import json
 import sys
@@ -122,7 +123,7 @@ def main():
     only = [x.strip() for x in a.only.split(",") if x.strip()] or None
     out = ROOT / "eval/out"
     print(f"Provider: {llm.provider()}")
-    R = run_all(ROOT / "data", out, use_cache=a.cache, only=only, pause=2)
+    R = run_all(ROOT / "data", out, use_cache=a.cache, only=only, pause=float(os.environ.get("EVAL_PAUSE", "2")))
     key = load_key()
     ok, rows = score_prices(R, key)
     total = len(rows)

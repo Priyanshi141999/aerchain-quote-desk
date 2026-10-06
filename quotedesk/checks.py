@@ -62,6 +62,8 @@ def vendor_checks(vendor_key: str, docs, ex: dict, lines: list[dict], items: lis
             F.append(flag("conditional_discount", "warning",
                           f"Conditional discount: {disc.get('percent') or ''}% — {disc['condition']}. Applied only in scenarios that meet it."))
     for c in terms.get("one_time_charges") or []:
+        if not c.get("amount"):
+            continue
         F.append(flag("one_time_charges", "info", f"One-time: {c['description']} ₹{c['amount']:,.0f} {c.get('per','')}"))
     fr = terms.get("freight") or {}
     if fr.get("basis") in ("extra_at_actuals", "extra_unspecified") or (fr.get("basis") == "extra_per_trip" and not fr.get("truck_payload_kg")):

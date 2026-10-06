@@ -43,6 +43,7 @@ jobs:
           WANT: ${{ github.event.inputs.provider || 'gemini' }}
           ONLY: ${{ github.event.inputs.only || '' }}
           GEMINI_MODEL: ${{ github.event.inputs.model || '' }}
+          EVAL_PAUSE: "75"
         run: |
           if [ "$WANT" != "both" ] && [ "$WANT" != "$LLM_PROVIDER" ]; then echo "skipping $LLM_PROVIDER"; exit 0; fi
           if [ "$LLM_PROVIDER" = "gemini" ] && [ -z "$GEMINI_API_KEY" ]; then echo "No GEMINI_API_KEY secret"; exit 0; fi
