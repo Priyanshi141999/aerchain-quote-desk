@@ -1,9 +1,0 @@
-Provider: gemini
-[llm] Gemini models usable by this key, best first: ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview']
-  E_annapurna: 22s (gemini-3.5-flash-lite)
-
-PRICES 30/30 (100%) | EDGE CASES 5/9
-  ❌ *: Qualification: A qualified
-  ❌ *: Qualification: B not qualified
-  ❌ *: Qualification: C not qualified
-  ❌ *: Qualification: D conditional

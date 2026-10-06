@@ -1,0 +1,79 @@
+  A_siam_pacific: 0s (gemini-3.5-flash)
+  B_deccan: 0s (gemini-3.5-flash-lite)
+  C_vijay: 0s (gemini-3.5-flash-lite)
+  D_sri_murugan: 0s (gemini-3.5-flash-lite)
+  E_annapurna: 0s (gemini-3.5-flash-lite)
+[llm] Gemini models usable by this key, best first: ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview']
+Total annual spend for split award among qualified vendors: 45,462,822.00 INR
+[llm] gemini-3.5-flash-lite attempt 1 failed (error): Expecting property name enclosed in double quotes: line 2 column 5 (char 6)
+[llm] gemini-3.5-flash-lite attempt 2 failed (error): Expecting property name enclosed in double quotes: line 2 column 9 (char 10)
+[llm] gemini-3.8-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.6-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.5-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.5-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-2.5-flash attempt 1 failed (error): 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash is no longer available to new user
+[llm] gemini-omni-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.5-flash-lite attempt 1 failed (error): Model did not return JSON. First 300 chars: ```python
+# Filter for qualified and conditional vendors
+qual_cond_vendors =
+[llm] gemini-3.5-flash-lite attempt 2 failed (error): Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+[llm] gemini-3.8-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.8-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.7-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.6-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.6-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.5-flash attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3.5-flash attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-3-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-2.5-flash attempt 1 failed (error): 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash is no longer available to new user
+[llm] gemini-omni-flash-preview attempt 1 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+[llm] gemini-omni-flash-preview attempt 2 failed (busy): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and 
+# Analyst test — gemini
+
+## Q: What if we split it, cheapest per line, but only among vendors who cleared the quality questionnaire?
+*11s*
+
+Splitting the award by the cheapest per line among qualified vendors results in a total annual cost of ₹4,02,32,152 (₹4.02 Cr), with vendor A (Siam Pacific Packaging (India) Pvt Ltd) winning all 30 line items. 
+
+**Key Facts:**
+- **Total Annual Cost:** ₹4,02,32,152 across all 30 lines.
+- **Winning Vendor:** Vendor A (Siam Pacific Packaging (India) Pvt Ltd) is the sole qualified vendor winning every line.
+- **Volume Scope:** Covers 30 distinct packaging items with quantities ranging from 900 to 2,00,000 units annually.
+
+**Caveats:** Only one vendor (Vendor A) cleared the quality questionnaire, meaning this split award is effectively a single-vendor award with no competitive pressure across lines.; Potential unknown freight, tax, or conditional discount terms could alter the final landed cost.; Rows excluded from ranking or un-cleared vendors were not considered.
+
+**Interpretation:** Find the cheapest price_inr per line among vendors who have qualification == 'qualified' (excluding suspected errors via excluded_from_ranking), and calculate the total annual cost for this split award. Also show which vendor wins each line.
+
+```python
+df = lines[(lines['qualification'] == 'qualified') & (~lines['excluded_from_ranking']) & (lines['price_inr'].notna())].copy()
+# Find cheapest vendor per line
+idx = df.groupby('line')['price_inr'].idxmin()
+cheapest_lines = df.loc[idx, ['line', 'item', 'vendor', 'vendor_name', 'annual_qty', 'price_inr', 'annual_value_inr']]
+cheapest_lines['total_cost'] = cheapest_lines['annual_qty'] * cheapest_lines['price_inr']
+
+result = cheapest_lines[['line', 'item', 'vendor', 'vendor_name', 'price_inr', 'annual_qty', 'total_cost']].sort_values('line')
+
+# Total spend summary
+total_spend = result['total_cost'].sum()
+print(f"Total annual spend for split award among qualified vendors: {total_spend:,.2f} INR")
+
+```
+
+**Computed result:**
+
+|   line | item                                       | vendor   | vendor_name                            |   price_inr |   annual_qty |       total_cost |
+|-------:|:-------------------------------------------|:---------|:---------------------------------------|------------:|-------------:|-----------------:|
+|      1 | Kettle 1.5L unit carton                    | A        | Siam Pacific Packaging (India) Pvt Ltd |        8.9  |       120000 |      1.068e+06   |
+|      2 | Steam iron unit carton                     | A        | Siam Pacific Packaging (India) Pvt Ltd |        7.72 |       150000 |      1.158e+06   |
+|      3 | Hair dryer retail carton (printed)         | A        | Siam Pacific Packaging (India) Pvt Ltd |        7.5  |        90000 | 675000           |
+|      4 | Mixer grinder 500W unit carton             | A        | Siam Pacific Packaging (India) Pvt Ltd |       39.51 |        80000 |      3.1608e+06  |
+|      5 | Mixer grinder 750W unit carton        
