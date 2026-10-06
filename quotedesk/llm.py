@@ -150,7 +150,7 @@ def complete_json(system: str, parts: list[Part], max_tokens: int = 16000, retri
     prov = provider()
     models = gemini_candidates() if prov == "gemini" else [os.environ.get("CLAUDE_MODEL", CLAUDE_DEFAULT), "claude-opus-5-5"]
     errors = []
-    for model in models[:4]:
+    for model in models[:8]:
         for attempt in range(retries):
             t0 = time.time()
             try:
@@ -167,5 +167,5 @@ def complete_json(system: str, parts: list[Part], max_tokens: int = 16000, retri
                 print(f"[llm] {model} attempt {attempt + 1} failed ({'busy' if busy else 'error'}): {msg[:120]}", flush=True)
                 if not busy and "JSON" not in msg and "Expecting" not in msg:
                     break  # a real error (bad key, bad request): try the next model, don't hammer this one
-                time.sleep(15 * (attempt + 1))
+                time.sleep(10 * (attempt + 1))
     raise RuntimeError(f"{prov}: all models failed. " + " | ".join(errors[-4:]))
