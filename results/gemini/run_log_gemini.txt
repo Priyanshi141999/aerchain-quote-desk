@@ -1,0 +1,20 @@
+Direct use of automatic function calling (AFC) in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message. Similarly, direct use of AFC in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream.
+Provider: gemini
+Traceback (most recent call last):
+  File "/home/runner/work/aerchain-quote-desk/aerchain-quote-desk/eval/run_eval.py", line 160, in <module>
+    main()
+  File "/home/runner/work/aerchain-quote-desk/aerchain-quote-desk/eval/run_eval.py", line 125, in main
+    R = run_all(ROOT / "data", out, use_cache=a.cache, only=only, pause=2)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/aerchain-quote-desk/aerchain-quote-desk/quotedesk/pipeline.py", line 76, in run_all
+    results[key] = process_vendor(folder, items, questions, terms, prev, cache, use_cache)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/aerchain-quote-desk/aerchain-quote-desk/quotedesk/pipeline.py", line 33, in process_vendor
+    ex, meta = extract_vendor(docs, items, questions, terms, facts)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/aerchain-quote-desk/aerchain-quote-desk/quotedesk/extract.py", line 113, in extract_vendor
+    res = complete_json(SYSTEM, parts, max_tokens=32000)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/aerchain-quote-desk/aerchain-quote-desk/quotedesk/llm.py", line 158, in complete_json
+    raise RuntimeError(f"{prov} call failed after {retries} attempts: {last}")
+RuntimeError: gemini call failed after 3 attempts: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
