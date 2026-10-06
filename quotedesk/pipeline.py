@@ -47,6 +47,8 @@ def process_vendor(folder: Path, items, questions, terms, prev, raw_cache: Path 
         lines.append(n)
 
     name = (ex.get("vendor") or {}).get("legal_name") or folder.name
+    if name.isupper():
+        name = name.title()
     return {
         "key": folder.name.split("_")[0],
         "folder": folder.name,

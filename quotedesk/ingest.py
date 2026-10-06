@@ -181,7 +181,7 @@ def scan_injection(docs: list[VendorDoc]) -> list[dict]:
             for pat in INJECTION_PATTERNS:
                 m = re.search(pat, t, re.I)
                 if m:
-                    s = max(0, m.start() - 60)
+                    s = m.start()
                     hits.append({"file": d.file, "pattern": pat, "snippet": t[s:m.end() + 120].replace("\n", " ")})
                     break
     # de-duplicate by file+snippet

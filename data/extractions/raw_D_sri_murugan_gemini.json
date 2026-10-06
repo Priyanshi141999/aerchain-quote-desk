@@ -1,0 +1,891 @@
+{
+  "extraction": {
+    "vendor": {
+      "legal_name": "Sri Murugan Corrugated Boxes",
+      "gstin": "33BXHPM2290L1ZK",
+      "contact_person": "M. Senthil",
+      "quote_reference": "Your RFQ Q/2026-27/014",
+      "quote_date": "2026-10-01"
+    },
+    "lines": [
+      {
+        "rfq_line": 1,
+        "status": "quoted",
+        "vendor_ref": "1",
+        "vendor_description": "3-PLY BOX 9.1x7.5x9.8 in 1clr (Kettle 1.5L unit)",
+        "price_as_written": "8.64",
+        "price_value": 8.64,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 1, RATE Rs. column",
+          "quote": "8.64"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 2,
+        "status": "quoted",
+        "vendor_ref": "2",
+        "vendor_description": "3-PLY BOX 12.2x5.9x6.7 in 2clr (Steam iron unit)",
+        "price_as_written": "7.49",
+        "price_value": 7.49,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 2, RATE Rs. column",
+          "quote": "7.49"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 3,
+        "status": "quoted",
+        "vendor_ref": "3",
+        "vendor_description": "3-PLY BOX 10.2x4.3x8.7 in 4clr (Hair dryer retail)",
+        "price_as_written": "6.98",
+        "price_value": 6.98,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 3, RATE Rs. column",
+          "quote": "6.98"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 4,
+        "status": "quoted",
+        "vendor_ref": "4",
+        "vendor_description": "5-PLY BOX 15.4x11.8x14.2 in 2clr (Mixer grinder 500W unit)",
+        "price_as_written": "37.34",
+        "price_value": 37.34,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 4, RATE Rs. column",
+          "quote": "37.34"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 5,
+        "status": "quoted",
+        "vendor_ref": "5",
+        "vendor_description": "5-PLY BOX 16.5x12.6x15.4 in 2clr (Mixer grinder 750W unit)",
+        "price_as_written": "42.81",
+        "price_value": 42.81,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [
+          {
+            "value": "44.50",
+            "why": "Struck through and corrected by hand to 42.81"
+          }
+        ],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 5, RATE Rs. column, handwritten correction over struck-through printed value",
+          "quote": "44.50-42.81"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 6,
+        "status": "quoted",
+        "vendor_ref": "6",
+        "vendor_description": "5-PLY BOX 25.6x16.9x16.1 in 1clr (Mixer grinder master)",
+        "price_as_written": "72.05",
+        "price_value": 72.05,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 6, RATE Rs. column",
+          "quote": "72.05"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 7,
+        "status": "quoted",
+        "vendor_ref": "7",
+        "vendor_description": "5-PLY BOX 16.1x13.4x4.7 in 2clr (Induction cooktop unit)",
+        "price_as_written": "28.38",
+        "price_value": 28.38,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 7, RATE Rs. column",
+          "quote": "28.38"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 8,
+        "status": "quoted",
+        "vendor_ref": "8",
+        "vendor_description": "3-PLY BOX 11.0x10.2x9.8 in 2clr (Pressure cooker 3L)",
+        "price_as_written": "12.94",
+        "price_value": 12.94,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 8, RATE Rs. column",
+          "quote": "12.94"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 9,
+        "status": "quoted",
+        "vendor_ref": "9",
+        "vendor_description": "5-PLY BOX 13.0x12.2x11.4 in 2clr (Pressure cooker 5L)",
+        "price_as_written": "31.50",
+        "price_value": 31.5,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 9, RATE Rs. column",
+          "quote": "31.50"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 10,
+        "status": "quoted",
+        "vendor_ref": "10",
+        "vendor_description": "5-PLY BOX 18.9x13.0x22.0 in 2clr (RO water purifier)",
+        "price_as_written": "57.86",
+        "price_value": 57.86,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 10, RATE Rs. column",
+          "quote": "57.86"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 11,
+        "status": "not_quoted",
+        "vendor_ref": null,
+        "vendor_description": null,
+        "price_as_written": null,
+        "price_value": null,
+        "price_value_max": null,
+        "currency": null,
+        "price_per_quantity": null,
+        "price_unit": null,
+        "gst_treatment": "not_stated",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "Footer note",
+          "quote": "* Air cooler box & base tray (7 ply) - not in our range."
+        },
+        "confidence": "high",
+        "reading_notes": "Vendor explicitly stated 'Air cooler box & base tray (7 ply) - not in our range' in footnote."
+      },
+      {
+        "rfq_line": 12,
+        "status": "quoted",
+        "vendor_ref": "11",
+        "vendor_description": "5-PLY BOX 49.2x7.1x4.3 in 1clr (Ceiling fan blade)",
+        "price_as_written": "32.80",
+        "price_value": 32.8,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 11, RATE Rs. column",
+          "quote": "32.80"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 13,
+        "status": "quoted",
+        "vendor_ref": "12",
+        "vendor_description": "5-PLY BOX 15.0x15.0x8.7 in 1clr (Ceiling fan motor)",
+        "price_as_written": "36.38",
+        "price_value": 36.38,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 12, RATE Rs. column",
+          "quote": "36.38"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 14,
+        "status": "quoted",
+        "vendor_ref": "13",
+        "vendor_description": "5-PLY BOX 17.3x9.4x18.9 in 1clr (Table fan)",
+        "price_as_written": "39.06",
+        "price_value": 39.06,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 13, RATE Rs. column",
+          "quote": "39.06"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 15,
+        "status": "quoted",
+        "vendor_ref": "14",
+        "vendor_description": "3-PLY BOX 12.6x7.9x8.7 in 2clr (Toaster unit)",
+        "price_as_written": "10.39",
+        "price_value": 10.39,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 14, RATE Rs. column",
+          "quote": "10.39"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 16,
+        "status": "quoted",
+        "vendor_ref": "15",
+        "vendor_description": "3-PLY BOX 11.8x7.9x5.9 in (Spares shipper - small)",
+        "price_as_written": "7.50",
+        "price_value": 7.5,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 15, RATE Rs. column",
+          "quote": "7.50"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 17,
+        "status": "quoted",
+        "vendor_ref": "16",
+        "vendor_description": "3-PLY BOX 17.7x11.8x9.8 in (Spares shipper - medium)",
+        "price_as_written": "17.49",
+        "price_value": 17.49,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 16, RATE Rs. column",
+          "quote": "17.49"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 18,
+        "status": "quoted",
+        "vendor_ref": "17",
+        "vendor_description": "5-PLY BOX 23.6x15.7x15.7 in 1clr (E-commerce outer)",
+        "price_as_written": "62.64",
+        "price_value": 62.64,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [
+          {
+            "value": "64.00",
+            "why": "Struck through and corrected by hand to 62.64"
+          }
+        ],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 17, RATE Rs. column, handwritten correction over struck-through printed value",
+          "quote": "64.00-62.64"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 19,
+        "status": "quoted",
+        "vendor_ref": "18",
+        "vendor_description": "7-PLY BOX 32.3x25.2x16.9 in 1clr (Export master)",
+        "price_as_written": "189.46",
+        "price_value": 189.46,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 18, RATE Rs. column",
+          "quote": "189.46"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 20,
+        "status": "quoted",
+        "vendor_ref": "19",
+        "vendor_description": "3PLY E-FLUTE MAILER DIE CUT 4clr",
+        "price_as_written": "7.03",
+        "price_value": 7.03,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 19, RATE Rs. column",
+          "quote": "7.03"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 21,
+        "status": "quoted",
+        "vendor_ref": "20",
+        "vendor_description": "PARTITION 12 CELL (SET)",
+        "price_as_written": "9.05",
+        "price_value": 9.05,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "set",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 20, RATE Rs. column",
+          "quote": "9.05"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 22,
+        "status": "quoted",
+        "vendor_ref": "21",
+        "vendor_description": "PARTITION 6 CELL (SET)",
+        "price_as_written": "5.87",
+        "price_value": 5.87,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "set",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 21, RATE Rs. column",
+          "quote": "5.87"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 23,
+        "status": "quoted",
+        "vendor_ref": "22",
+        "vendor_description": "DIE CUT JAR TRAY",
+        "price_as_written": "6.66",
+        "price_value": 6.66,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 22, RATE Rs. column",
+          "quote": "6.66"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 24,
+        "status": "quoted",
+        "vendor_ref": "23",
+        "vendor_description": "E-FLUTE INSERT (INDUCTION)",
+        "price_as_written": "5.09",
+        "price_value": 5.09,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 23, RATE Rs. column",
+          "quote": "5.09"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 25,
+        "status": "quoted",
+        "vendor_ref": "24",
+        "vendor_description": "LAYER PAD 47x39 in",
+        "price_as_written": "1.81",
+        "price_value": 1.81,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "sqft",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 24, RATE Rs. column",
+          "quote": "1.81"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 26,
+        "status": "quoted",
+        "vendor_ref": "25",
+        "vendor_description": "LAYER PAD 31.5x23.6 in",
+        "price_as_written": "1.81",
+        "price_value": 1.81,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "sqft",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 25, RATE Rs. column",
+          "quote": "1.81"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 27,
+        "status": "quoted",
+        "vendor_ref": "26",
+        "vendor_description": "CORNER PAD 6x6 in 5PLY",
+        "price_as_written": "1.67",
+        "price_value": 1.67,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "piece",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 26, RATE Rs. column",
+          "quote": "1.67"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 28,
+        "status": "quoted",
+        "vendor_ref": "27",
+        "vendor_description": "SF ROLL 39 in x 50 m",
+        "price_as_written": "50.28",
+        "price_value": 50.28,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "kg",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 27, RATE Rs. column",
+          "quote": "50.28"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 29,
+        "status": "quoted",
+        "vendor_ref": "28",
+        "vendor_description": "SF ROLL 47 in x 50 m",
+        "price_as_written": "50.21",
+        "price_value": 50.21,
+        "price_value_max": null,
+        "currency": "INR",
+        "price_per_quantity": 1,
+        "price_unit": "kg",
+        "gst_treatment": "excluded",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "row 28, RATE Rs. column",
+          "quote": "50.21"
+        },
+        "confidence": "high",
+        "reading_notes": null
+      },
+      {
+        "rfq_line": 30,
+        "status": "not_quoted",
+        "vendor_ref": null,
+        "vendor_description": null,
+        "price_as_written": null,
+        "price_value": null,
+        "price_value_max": null,
+        "currency": null,
+        "price_per_quantity": null,
+        "price_unit": null,
+        "gst_treatment": "not_stated",
+        "tiers": [],
+        "spec_deviation": null,
+        "shared_price_with_lines": [],
+        "superseded_values": [],
+        "source": {
+          "file": "IMG_20261002_113412.jpg",
+          "location": "Footer note",
+          "quote": "* Air cooler box & base tray (7 ply) - not in our range."
+        },
+        "confidence": "high",
+        "reading_notes": "Vendor explicitly stated 'Air cooler box & base tray (7 ply) - not in our range' in footnote."
+      }
+    ],
+    "commercial_terms": {
+      "freight": {
+        "basis": "extra_at_actuals",
+        "amount": null,
+        "amount_currency": null,
+        "per": null,
+        "truck_payload_kg": null,
+        "note": "Transport extra at actuals.",
+        "source": "IMG_20261002_113412.jpg, footer text"
+      },
+      "gst_rate_percent": 18.0,
+      "payment_days": 60,
+      "payment_text": "Payment 60 days.",
+      "validity_text": null,
+      "validity_days": null,
+      "valid_until": null,
+      "lead_time_days": 10,
+      "price_firmness": null,
+      "currency_clause": null,
+      "discounts": [],
+      "one_time_charges": [
+        {
+          "description": "Plates / dies",
+          "amount": 0.0,
+          "per": "customer to supply or charged at cost",
+          "source": "IMG_20261002_113412.jpg, footer text"
+        }
+      ],
+      "other_terms": []
+    },
+    "questionnaire": [
+      {
+        "qid": "Q1",
+        "answered": true,
+        "answer_summary": "ISO yes - certificate attached",
+        "meets_requirement": "yes",
+        "reason": "Certificate attached, valid until 09-Aug-2028 for Murugan Packaging Industries.",
+        "source": "email.eml / ISO_certificate.pdf"
+      },
+      {
+        "qid": "Q2",
+        "answered": true,
+        "answer_summary": "Test report yes every lot",
+        "meets_requirement": "yes",
+        "reason": "Vendor confirmed providing test reports for every lot.",
+        "source": "email.eml"
+      },
+      {
+        "qid": "Q3",
+        "answered": true,
+        "answer_summary": "450 ton per month, running 80%",
+        "meets_requirement": "yes",
+        "reason": "Monthly capacity is 450 tonnes with 80% utilization.",
+        "source": "email.eml"
+      },
+      {
+        "qid": "Q4",
+        "answered": true,
+        "answer_summary": "10 days delivery",
+        "meets_requirement": "yes",
+        "reason": "Standard lead time is 10 days.",
+        "source": "email.eml"
+      },
+      {
+        "qid": "Q5",
+        "answered": false,
+        "answer_summary": null,
+        "meets_requirement": "not_answered",
+        "reason": "Not answered in the vendor's response.",
+        "source": null
+      },
+      {
+        "qid": "Q6",
+        "answered": true,
+        "answer_summary": "printing upto 3 colour",
+        "meets_requirement": "partial",
+        "reason": "Vendor states printing up to 3 colours, whereas lines 3 and 20 require 4-colour print.",
+        "source": "email.eml"
+      },
+      {
+        "qid": "Q7",
+        "answered": false,
+        "answer_summary": null,
+        "meets_requirement": "not_answered",
+        "reason": "Not answered in the vendor's response.",
+        "source": null
+      },
+      {
+        "qid": "Q8",
+        "answered": true,
+        "answer_summary": "60 days ok",
+        "meets_requirement": "yes",
+        "reason": "Vendor accepts 60 days payment terms.",
+        "source": "email.eml"
+      },
+      {
+        "qid": "Q9",
+        "answered": true,
+        "answer_summary": "GST 33BXHPM2290L1ZK",
+        "meets_requirement": "yes",
+        "reason": "GSTIN provided.",
+        "source": "email.eml"
+      },
+      {
+        "qid": "Q10",
+        "answered": true,
+        "answer_summary": "yes replace",
+        "meets_requirement": "yes",
+        "reason": "Vendor will replace rejected lots.",
+        "source": "email.eml"
+      }
+    ],
+    "certificates": [
+      {
+        "file": "ISO_certificate.pdf",
+        "standard": "ISO 9001:2015",
+        "certificate_holder": "Murugan Packaging Industries",
+        "holder_address": "SF No. 211, Hosur Road, Kaveripattinam, Krishnagiri 635112",
+        "certificate_no": "QMS/IN/39150",
+        "valid_from": "2022-08-10",
+        "valid_until": "2028-08-09"
+      }
+    ],
+    "conflicts": [],
+    "revisions": [
+      {
+        "what_changed": "Rate for line item 5 (Mixer grinder 750W unit carton) changed from 44.50 to 42.81",
+        "earlier": "44.50",
+        "later": "42.81",
+        "source": "IMG_20261002_113412.jpg"
+      },
+      {
+        "what_changed": "Rate for line item 18 (E-commerce outer carton) changed from 64.00 to 62.64",
+        "earlier": "64.00",
+        "later": "62.64",
+        "source": "IMG_20261002_113412.jpg"
+      }
+    ],
+    "references_outside_documents": [],
+    "suspicious_content": [],
+    "overall_notes": [
+      "Vendor legal name on ISO certificate is 'Murugan Packaging Industries', whereas the quote header is 'Sri Murugan Corrugated Boxes'."
+    ]
+  },
+  "meta": {
+    "provider": "gemini",
+    "model": "gemini-3.5-flash-lite",
+    "seconds": 41.3
+  }
+}
