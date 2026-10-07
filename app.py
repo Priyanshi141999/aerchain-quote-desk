@@ -24,6 +24,21 @@ for k in ("GEMINI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_MODEL", "CLAUDE_MODEL")
     except Exception:
         pass
 
+import importlib  # noqa: E402
+import quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extract, quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot, quotedesk.llm  # noqa: E401,E402
+# Streamlit re-runs app.py on each change but keeps imported modules cached; reload them so app and logic never drift apart
+# (only when a file actually changed, so in-memory state such as busy-model cooldowns survives normal reruns)
+import sys as _sys  # noqa: E402
+_seen = getattr(_sys, "_qd_mtimes", {})
+_changed = False
+for _m in (quotedesk.llm, quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extract,
+           quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot):
+    _mt = os.path.getmtime(_m.__file__)
+    if _changed or (_m.__name__ in _seen and _seen[_m.__name__] != _mt):
+        importlib.reload(_m)
+        _changed = True
+    _seen[_m.__name__] = _mt
+_sys._qd_mtimes = _seen
 from quotedesk import analyst, copilot, llm  # noqa: E402
 from quotedesk.ingest import read_vendor_folder  # noqa: E402
 from quotedesk.pipeline import load_rfq, run_all  # noqa: E402
@@ -349,7 +364,7 @@ elif page.startswith("3"):
                             ("freight ?" if col == "landed_inr" and m.price_inr is not None else "—"))
             else:
                 mark = {"vendor_confirmed": " ✅", "vendor_corrected": " ✅", "buyer_corrected": " ✏️",
-                        "buyer_confirmed": " ✏️"}.get(m.verification, "")
+                        "buyer_confirmed": " ✏️"}.get(getattr(m, "verification", "unverified"), "")
                 if m.worst_flag == 0:
                     mark += " 🛑"
                 vals.append(f"{x:,.2f}{mark}")
@@ -370,7 +385,7 @@ elif page.startswith("3"):
                 elif show_low and m.confidence == "low":
                     s.loc[ln, v] += "; outline: 2px solid #f59e0b"
         return s
-    n_ver = int(sel.verification.str.startswith("vendor").sum())
+    n_ver = int(sel["verification"].astype(str).str.startswith("vendor").sum()) if "verification" in sel else 0
     n_priced = int(sel[col].notna().sum())
     st.markdown(f"**₹ per unit, ex-GST{' + freight' if col == 'landed_inr' else ''}** · green = lowest eligible · "
                 "✅ confirmed by vendor · ✏️ set by buyer · 🛑 blocker, needs your decision · no mark = read by AI, "
@@ -395,7 +410,7 @@ elif page.startswith("3"):
         src = row['source'] or {}
         st.markdown(f"**Found in:** `{src.get('file', '—')}` · {src.get('location', '')}  \n> {src.get('quote', '')}")
         ver_txt = {"vendor_confirmed": "✅ confirmed by the vendor", "vendor_corrected": "✅ corrected by the vendor",
-                   "buyer_corrected": "✏️ set by the buyer", "buyer_confirmed": "✏️ confirmed by the buyer"}.get(row['verification'], "read by AI, awaiting vendor confirmation")
+                   "buyer_corrected": "✏️ set by the buyer", "buyer_confirmed": "✏️ confirmed by the buyer"}.get(row.get('verification', 'unverified'), "read by AI, awaiting vendor confirmation")
         st.markdown(f"**Status:** {ver_txt} · AI reading confidence: **{row['confidence']}**")
         st.markdown("**How we got to the comparable number**")
         st.markdown("<div class='qd-trail'>" + "<br>".join(row['trail'] or ["no price"]) + "</div>", unsafe_allow_html=True)
