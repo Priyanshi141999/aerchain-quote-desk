@@ -18,21 +18,54 @@ from .normalize import SETTINGS, flag
 
 
 # ------------------------------------------------------------------ what needs fixing
-def requirements(v: dict) -> list[dict]:
+def effective_questions(standard: dict, published: list | None) -> dict:
+    """The questionnaire evaluation uses: the standard one, with must-pass flags as set in the published RFQ.
+    Questions added in the co-pilot were not asked of these vendors, so they are listed but not scored."""
+    if not published:
+        return standard
+    flags = {str(q.get("id")): bool(q.get("must_pass")) for q in published}
+    qs = []
+    for q in standard["questions"]:
+        q = dict(q)
+        if q["id"] in flags:
+            q["must_pass"] = flags[q["id"]]
+        qs.append(q)
+    return {**standard, "questions": qs,
+            "not_scored": [q for q in published if str(q.get("id")) not in {x["id"] for x in standard["questions"]}]}
+
+
+def requalify(results: dict, questions: dict) -> dict:
+    """Recompute every vendor's qualification with the given questionnaire (same rules, new must-pass set)."""
+    R = copy.deepcopy(results)
+    for v in R.values():
+        v["qualification"] = qualification(v["extraction"], questions, v["name"])
+    return R
+
+
+def requirements(v: dict, questions: dict | None = None) -> list[dict]:
     """Everything standing between this vendor and full eligibility, and whether the vendor can fix it."""
     q = v["qualification"]["questions"]
     terms = (v["extraction"].get("commercial_terms") or {})
     flags = {f["code"]: f for f in v["vendor_flags"]}
     out = []
-    if "Q1" in q and q["Q1"]["status"] != "yes":
+    if v["qualification"]["overall"] == "disqualified":
+        return [{"id": "disqualified", "kind": "buyer_decision", "title": "Disqualified by the buyer",
+                 "why": v["qualification"].get("reason", ""), "ask": ""}]
+    texts = {x["id"]: x["text"] for x in (questions or {}).get("questions", [])}
+    for qid, st_ in q.items():
+        if not st_["must_pass"] or st_["status"] == "yes" or qid in ("Q1", "Q2", "Q8"):
+            continue
+        out.append({"id": qid, "kind": "commitment", "title": f"{qid} (must-pass)", "why": st_["reason"],
+                    "ask": f"Confirm: {texts.get(qid, qid)}"})
+    if "Q1" in q and q["Q1"]["must_pass"] and q["Q1"]["status"] != "yes":
         out.append({"id": "Q1", "kind": "certificate", "title": "ISO 9001:2015 certificate (must-pass)",
                     "why": q["Q1"]["reason"],
                     "ask": "Upload a valid ISO 9001:2015 certificate issued to your legal entity. It must be valid on the RFQ deadline."})
-    if "Q2" in q and q["Q2"]["status"] != "yes":
+    if "Q2" in q and q["Q2"]["must_pass"] and q["Q2"]["status"] != "yes":
         out.append({"id": "Q2", "kind": "commitment", "title": "Lot-wise test reports (must-pass)",
                     "why": q["Q2"]["reason"],
                     "ask": "Confirm you will provide lot-wise Box Compression, bursting strength and moisture reports with every dispatch."})
-    if "Q8" in q and q["Q8"]["status"] != "yes":
+    if "Q8" in q and q["Q8"]["must_pass"] and q["Q8"]["status"] != "yes":
         pd_ = terms.get("payment_days")
         out.append({"id": "Q8", "kind": "commitment", "title": "Payment terms: 60 days from invoice (must-pass)",
                     "why": q["Q8"]["reason"] + (f" (you quoted {pd_} days)" if pd_ else ""),
@@ -157,6 +190,10 @@ def apply(results: dict, updates: dict, questions: dict) -> dict:
             qn["Q2"] = {"qid": "Q2", "answered": True, "meets_requirement": "yes",
                         "answer_summary": "Committed via vendor portal to lot-wise test reports", "reason": "Committed via vendor portal"}
             notes.append("committed to lot-wise test reports")
+        for qid in [k for k in up if re.fullmatch(r"Q\d+", k) and k not in ("Q1", "Q2", "Q8") and up[k]]:
+            qn[qid] = {"qid": qid, "answered": True, "meets_requirement": "yes",
+                       "answer_summary": "Confirmed via vendor portal", "reason": "Confirmed via vendor portal"}
+            notes.append(f"confirmed {qid}")
         if up.get("Q8"):
             terms["payment_days"] = SETTINGS["required_payment_days"]
             qn["Q8"] = {"qid": "Q8", "answered": True, "meets_requirement": "yes",
@@ -166,8 +203,8 @@ def apply(results: dict, updates: dict, questions: dict) -> dict:
 
         before = v["qualification"]["overall"]
         v["qualification"] = qualification(ex, questions, v["name"])
-        for qid in ("Q1", "Q2", "Q8"):
-            if qid in v["qualification"]["questions"] and (qid == "Q1" and cert and cert.get("accepted") or up.get(qid)):
+        for qid in list(v["qualification"]["questions"]):
+            if (qid == "Q1" and cert and cert.get("accepted")) or up.get(qid):
                 v["qualification"]["questions"][qid]["reason"] += f" (updated by vendor {when})"
 
         resolved = set()
@@ -195,4 +232,34 @@ def apply(results: dict, updates: dict, questions: dict) -> dict:
                 msg += f" Qualification: {before.replace('_', ' ')} → {after.replace('_', ' ')}."
             v["vendor_flags"].append(flag("vendor_update", "info", msg))
             v["update_summary"] = {"before": before, "after": after, "notes": notes, "at": when}
+    return R
+
+
+# ------------------------------------------------------------------ buyer decisions (judgement calls only the buyer makes)
+BUYER_DECIDES = {"late_submission": "late submission", "manipulation_attempt": "hidden instructions aimed at the evaluation"}
+
+
+def apply_buyer_decisions(results: dict, decisions: dict) -> dict:
+    """decisions: vendor -> {"disqualify": {reason, by, at}} and/or {"accept": {flag_code: {reason, by, at}}}."""
+    if not decisions:
+        return results
+    R = copy.deepcopy(results)
+    for vk, d in decisions.items():
+        if vk not in R:
+            continue
+        v = R[vk]
+        for code, a in (d.get("accept") or {}).items():
+            for f in v["vendor_flags"]:
+                if f["code"] == code and f["severity"] == "blocker":
+                    f.update(severity="info", code=f"{code}_accepted",
+                             message=f"Buyer accepted ({BUYER_DECIDES.get(code, code)}) on {a['at'][:10]}: {a['reason']}. Original: {f['message']}")
+        dq = d.get("disqualify")
+        if dq:
+            before = v["qualification"]["overall"]
+            v["qualification"] = {**v["qualification"], "overall": "disqualified",
+                                  "reason": f"Disqualified by {dq['by']} on {dq['at'][:10]}: {dq['reason']}"}
+            v["vendor_flags"].append(flag("buyer_disqualified", "blocker",
+                                          f"Disqualified by the buyer ({dq['reason']}). Excluded from award; was {before.replace('_', ' ')}."))
+            v["update_summary"] = {"before": before, "after": "disqualified", "notes": [f"disqualified by buyer: {dq['reason']}"],
+                                   "at": dq["at"][:10]}
     return R

@@ -58,7 +58,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-QUAL_BADGE = {"qualified": ("Qualified", "qd-q"), "conditional": ("Conditional", "qd-c"), "not_qualified": ("Not qualified", "qd-n")}
+QUAL_BADGE = {"qualified": ("Qualified", "qd-q"), "conditional": ("Conditional", "qd-c"), "not_qualified": ("Not qualified", "qd-n"),
+              "disqualified": ("Disqualified by buyer", "qd-n")}
 SEV_ICON = {"blocker": "🛑", "warning": "⚠️", "info": "ℹ️"}
 VENDOR_FOLDERS = {p.name.split("_")[0]: p for p in sorted((DATA / "vendors").iterdir()) if p.is_dir()}
 
@@ -71,6 +72,7 @@ ss.setdefault("chat", [])            # analyst conversation
 ss.setdefault("copilot_msgs", [])
 ss.setdefault("draft", None)
 ss.setdefault("published", False)
+ss.setdefault("buyer_decisions", {})   # vendor key -> buyer's disqualify / accept decisions
 ss.setdefault("vendor_updates", {})  # vendor key -> evidence submitted in the portal after the quote
 
 items, questions, rfq_terms, prev = load_rfq(DATA)
@@ -133,7 +135,11 @@ if "results" not in ss:
         except Exception as e:
             ss.results = {}
             st.error(f"Could not load vendor readings: {e}")
-R = updates.apply(ss.get("results", {}), ss.vendor_updates, questions) if ss.get("results") else {}
+EFFQ = updates.effective_questions(questions, ss.get("published_questions"))
+MUST = [q["id"] for q in EFFQ["questions"] if q["must_pass"]]
+R = (updates.apply_buyer_decisions(
+        updates.apply(updates.requalify(ss["results"], EFFQ), ss.vendor_updates, EFFQ), ss.buyer_decisions)
+     if ss.get("results") else {})
 L = line_table(R, items, ss.overrides) if R else pd.DataFrame()
 V = vendor_table(R) if R else pd.DataFrame()
 
@@ -144,7 +150,7 @@ def updates_banner():
         txt = " · ".join(f"**{short_name(R[k]['name'])}** {u['before'].replace('_', ' ')} → **{u['after'].replace('_', ' ')}**"
                          if u["before"] != u["after"] else f"**{short_name(R[k]['name'])}** updated ({'; '.join(u['notes'])})"
                          for k, u in changed)
-        st.info(f"🔄 Vendor updates received via the portal: {txt}. Rankings and flags below reflect them.")
+        st.info(f"🔄 Changes since the quotes arrived (vendor updates and your decisions): {txt}. Rankings and flags below reflect them.")
 
 
 def badge(qual):
@@ -218,7 +224,7 @@ if page.startswith("1"):
                     if len(ss.copilot_msgs) <= 2:
                         ss.copilot_baseline = attach_text  # what code compares every later draft against
                     out = copilot.turn(msg, ss.draft, attach_text if len(ss.copilot_msgs) <= 2 else None, ss.copilot_msgs[:-1],
-                                       baseline_text=ss.get("copilot_baseline"),
+                                       baseline_text=ss.get("copilot_baseline"), standard_questions=questions["questions"],
                                        on_status=lambda m: status.update(label=f"Co-pilot is drafting… {m}"))
                     ss.draft = out.get("draft") or ss.draft
                     reply = out.get("reply", "")
@@ -248,22 +254,36 @@ if page.startswith("1"):
                 st.markdown(f"**{len(dl)} line items** · {n_new} new · {n_chg} changed")
                 edited = st.data_editor(dl, hide_index=True, width="stretch", height=360, key="draft_editor")
                 ss.draft["lines"] = edited.to_dict("records")
-            with st.expander(f"Questionnaire ({len(d.get('questionnaire', []))} questions)", expanded=False):
-                for q in d.get("questionnaire", []):
-                    st.markdown(f"- **{q.get('id')}** {q.get('text')} {'`MUST-PASS`' if q.get('must_pass') else ''}  \n  <span class='qd-muted'>{q.get('why','')}</span>", unsafe_allow_html=True)
+            qs_ = d.get("questionnaire", [])
+            n_mp = sum(1 for q in qs_ if q.get("must_pass"))
+            with st.expander(f"Questionnaire ({len(qs_)} questions · {n_mp} must-pass)", expanded=False):
+                st.caption("Tick or untick **must_pass**. A vendor must pass every must-pass question to qualify; "
+                           "on publishing, these choices drive qualification everywhere.")
+                if qs_:
+                    qdf = pd.DataFrame(qs_)[[c for c in ("id", "text", "must_pass", "why") if c in pd.DataFrame(qs_).columns]]
+                    qed = st.data_editor(qdf, hide_index=True, width="stretch", key="q_editor",
+                                         disabled=[c for c in qdf.columns if c != "must_pass"],
+                                         column_config={"must_pass": st.column_config.CheckboxColumn("must_pass"),
+                                                        "text": st.column_config.TextColumn(width="large")})
+                    ss.draft["questionnaire"] = qed.to_dict("records")
             with st.expander("Commercial terms", expanded=False):
                 for t in d.get("terms", []):
                     st.markdown(f"- {t}")
             c1, c2 = st.columns(2)
             if c1.button("📤 Publish RFQ to 5 vendors", type="primary", disabled=ss.published):
                 ss.published = True
-                log("RFQ published", f"{len(dl)} lines sent to 5 vendors by email (stubbed channel)")
+                ss.published_questions = ss.draft.get("questionnaire") or None
+                mp_ = [q["id"] for q in (ss.published_questions or []) if q.get("must_pass")]
+                log("RFQ published", f"{len(dl)} lines sent to 5 vendors by email (stubbed channel); must-pass: {', '.join(mp_) or 'standard'}")
                 st.rerun()
             if ss.published:
                 st.success("Sent by email to Siam Pacific, Deccan Packaging, Vijay Box Works, Sri Murugan and Annapurna. "
                            "Vendors can reply in any format. **Nine days later →** see *2 · Vendor responses*.")
                 st.caption("Email is stubbed for the demo. The responses in this demo answer the published packaging RFQ "
                            "KHA/PKG/RFQ/2026-27/014 (30 lines).")
+                st.info("Qualification now uses your must-pass questions: **" + ", ".join(MUST) + "**."
+                        + (f" New questions not asked in these vendor responses (not scored): "
+                           + ", ".join(str(q.get('id')) for q in EFFQ.get('not_scored', [])) if EFFQ.get("not_scored") else ""))
 
 # ================================================================== 2. RESPONSES
 elif page.startswith("2"):
@@ -335,6 +355,8 @@ elif page.startswith("3"):
     if L.empty:
         st.stop()
     updates_banner()
+    st.caption(f"Must-pass questions used for qualification: **{', '.join(MUST)}**"
+               + (" (as set when the RFQ was published)" if ss.get("published_questions") else " (company standard)"))
     c = st.columns([2, 2, 2, 3])
     basis = c[0].radio("Price basis", ["Basic price", "Landed (incl. freight)"], horizontal=False)
     scope = c[1].radio("Vendors", ["All vendors", "Qualified + conditional", "Qualified only"])
@@ -346,7 +368,7 @@ elif page.startswith("3"):
     for cc, (_, vr) in zip(cards, V.iterrows()):
         q = R[vr["vendor"]]["qualification"]["questions"]
         mp = " ".join(f"{qid}:{'✅' if q[qid]['status'] == 'yes' else '❌' if q[qid]['status'] in ('no', 'not_answered') else '🟡'}"
-                      for qid in ("Q1", "Q2", "Q8"))
+                      for qid in MUST if qid in q)
         tot = L[(L.vendor == vr["vendor"])]["annual_value_inr"].sum()
         cc.markdown(f"""<div class="qd-card"><b>{vr['vendor']} · {short_name(vr['vendor_name'])}</b><br>{badge(vr['qualification'])}
         <div class="qd-muted" style="margin-top:6px">{mp}<br>{vr['lines_priced']}/30 lines · {crore(tot)} quoted<br>
@@ -461,6 +483,46 @@ elif page.startswith("4"):
     st.progress(done / max(len(Q), 1), text=f"{done} of {len(Q)} reviewed")
     sev_f = st.multiselect("Show", ["blocker", "warning"], default=["blocker", "warning"],
                            format_func=lambda s: f"{SEV_ICON[s]} {s}s")
+    # ---- buyer decisions: judgement calls only the buyer can make
+    decidable = [x for x in Q if x["line"] is None and x["code"] in updates.BUYER_DECIDES
+                 and R[x["vendor"]]["qualification"]["overall"] != "disqualified"]
+    if decidable:
+        st.subheader("Your decisions")
+        st.caption("These can't be fixed by the vendor. Decide, with a reason; it goes into the audit log.")
+        for x in decidable:
+            vk_ = x["vendor"]
+            with st.container(border=True):
+                st.markdown(f"🛑 **{x['vendor_name']}** — **{updates.BUYER_DECIDES[x['code']]}**: {x['message']}")
+                reason = st.text_input("Reason (required)", key=f"dec_r_{vk_}_{x['code']}",
+                                       placeholder="e.g. Deadline was clearly communicated; late bids are not accepted")
+                b1, b2, _ = st.columns([2, 2, 3])
+                if b1.button("⛔ Disqualify vendor", key=f"dq_{vk_}_{x['code']}"):
+                    if not reason.strip():
+                        st.error("Please give a reason.")
+                    else:
+                        ss.buyer_decisions.setdefault(vk_, {})["disqualify"] = {"reason": reason, "by": "Priya Raman (buyer)",
+                                                                                "at": datetime.now().isoformat(), "flag": x["code"]}
+                        log("Vendor disqualified", f"{vk_} ({updates.BUYER_DECIDES[x['code']]}): {reason}")
+                        st.rerun()
+                if b2.button("✅ Accept and keep in evaluation", key=f"ac_{vk_}_{x['code']}"):
+                    if not reason.strip():
+                        st.error("Please give a reason.")
+                    else:
+                        ss.buyer_decisions.setdefault(vk_, {}).setdefault("accept", {})[x["code"]] = {
+                            "reason": reason, "by": "Priya Raman (buyer)", "at": datetime.now().isoformat()}
+                        log("Buyer accepted", f"{vk_} ({updates.BUYER_DECIDES[x['code']]}): {reason}")
+                        st.rerun()
+    dq_list = [(k, d["disqualify"]) for k, d in ss.buyer_decisions.items() if d.get("disqualify")]
+    if dq_list:
+        st.subheader("Disqualified vendors")
+        for k, d in dq_list:
+            c1_, c2_ = st.columns([5, 1])
+            c1_.markdown(f"⛔ **{R[k]['name']}**: {d['reason']} <span class='qd-muted'>({d['at'][:16].replace('T', ' ')})</span>", unsafe_allow_html=True)
+            if c2_.button("Reinstate", key=f"rein_{k}"):
+                ss.buyer_decisions[k].pop("disqualify", None)
+                log("Vendor reinstated", f"{k}")
+                st.rerun()
+    st.subheader("Everything else")
     for qi, x in enumerate(Q):
         if x["severity"] not in sev_f:
             continue
@@ -543,7 +605,7 @@ elif page.startswith("5"):
                 facts = []
                 for vk_, v_ in R.items():
                     qq = v_["qualification"]["questions"]
-                    must = "; ".join(f"{qid} {qq[qid]['status']}: {qq[qid]['reason'][:110]}" for qid in ("Q1", "Q2", "Q8") if qid in qq)
+                    must = "; ".join(f"{qid} {qq[qid]['status']}: {qq[qid]['reason'][:110]}" for qid in MUST if qid in qq)
                     blk = "; ".join(f["message"][:120] for f in v_["vendor_flags"] if f["severity"] == "blocker")
                     facts.append(f"{vk_} {v_['name']}: {v_['qualification']['overall']} | must-pass: {must} | blockers: {blk or 'none'}")
                 out = analyst.ask(q, L, V, items, ss.chat, on_status=lambda m: status.update(label=f"Working on it… {m}"),
@@ -584,12 +646,14 @@ elif page.startswith("6"):
         if v.get("update_summary"):
             u = v["update_summary"]
             st.success(f"Updates received {u['at']}: {'; '.join(u['notes'])}. Status: {u['before'].replace('_', ' ')} → {u['after'].replace('_', ' ')}.")
-        reqs = updates.requirements(v)
+        reqs = updates.requirements(v, EFFQ)
         fixable = [r for r in reqs if r["kind"] != "buyer_decision"]
-        if not fixable:
+        if qual == "disqualified":
+            st.error(f"This quote is no longer under consideration. {v['qualification'].get('reason', '')}")
+        elif not fixable:
             st.success("Nothing further is needed from you for eligibility.")
         else:
-            must_fix = [r for r in fixable if r["id"] in ("Q1", "Q2", "Q8")]
+            must_fix = [r for r in fixable if r["id"] in MUST]
             if must_fix:
                 st.markdown(f"To be **eligible for award**, please resolve the following **{len(fixable)} item(s)** "
                             f"({len(must_fix)} must-pass):")

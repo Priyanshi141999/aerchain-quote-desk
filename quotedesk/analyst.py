@@ -21,7 +21,8 @@ your head and never invent data.
 
 DATA AVAILABLE TO YOUR CODE (already loaded as pandas DataFrames):
 - `lines`: one row per vendor x RFQ line. Columns:
-  vendor (key A-E), vendor_name, qualification ("qualified"|"conditional"|"not_qualified"), line (1-30), item,
+  vendor (key A-E), vendor_name, qualification ("qualified"|"conditional"|"not_qualified"|"disqualified" = removed by
+  the buyer, never eligible), line (1-30), item,
   board, annual_qty, uom, status, price_inr (INR per uom, ex-GST, ex-freight; NaN if not priced),
   freight_inr (INR per uom; NaN if unknown), landed_inr (price+freight; NaN if freight unknown),
   annual_value_inr (price_inr x annual_qty), confidence ("high"|"medium"|"low"|"confirmed"),
@@ -95,6 +96,7 @@ lines each vendor wins, which lines have no eligible quote, WHY vendors are excl
 caveats that could change the decision (unqualified vendors, suspected errors, missing lines, unknown freight, conditional discounts, late or
 expired offers). Money: when a result has a "<name>__say_as" value, quote THAT string exactly (it is already converted to crore/lakh).
 Never convert units yourself and never print raw rupee figures like ₹26559500.0. 1 crore = 100 lakh.
+Never add up rows yourself: use the "ready-made totals" given with each table, or leave the total out.
 Refer to vendors by name (e.g. "Siam Pacific (A)").
 If the results are empty or show an error, say plainly what could not be answered and why.
 If the results say the requested data does not exist, START by saying so plainly, then present any proxy as a proxy.
@@ -242,9 +244,43 @@ def _tidy(obj):
     return obj
 
 
+MONEY_WORDS = ("value", "total", "cost", "spend", "saving", "diff", "amount", "inr", "landed")
+
+
+def _money_cols(df: pd.DataFrame) -> list:
+    return [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])
+            and any(w in str(c).lower() for w in MONEY_WORDS) and "__say_as" not in str(c)
+            and df[c].abs().max() >= 1e5]
+
+
+def _group_cols(df: pd.DataFrame) -> list:
+    out = []
+    for c in df.columns:
+        try:
+            if "__say_as" not in str(c) and not pd.api.types.is_numeric_dtype(df[c]) and 1 < df[c].nunique() <= 12:
+                out.append(c)
+        except TypeError:
+            pass
+    return out
+
+
+def table_totals(df: pd.DataFrame) -> dict:
+    """Every total a writer might want: per money column, overall and per group (vendor, winner, ...)."""
+    tot = {}
+    for m in _money_cols(df):
+        tot[f"total of {m}"] = float(df[m].sum())
+        for g in _group_cols(df):
+            for k, v in df.groupby(df[g].fillna("none"))[m].sum().items():
+                tot[f"total of {m} for {g}={k}"] = float(v)
+    return tot
+
+
 def _facts_about(df: pd.DataFrame) -> str:
-    """Counts code computes so the writer never has to count rows itself."""
+    """Counts and totals code computes so the writer never has to count or add up rows itself."""
     out = [f"(table has {len(df)} rows)"]
+    tt = table_totals(df)
+    if tt:
+        out.append("ready-made totals: " + "; ".join(f"{k} = {fmt_inr(v)}" for k, v in list(tt.items())[:30]))
     if "winner" in df.columns:
         wins = df["winner"].fillna("NO ELIGIBLE QUOTE").value_counts().to_dict()
         out.append("lines won per vendor: " + ", ".join(f"{k}: {v} lines" for k, v in wins.items()))
@@ -350,6 +386,8 @@ def _frames_in(obj):
 def verify_numbers(answer: str, result, question: str = "") -> dict:
     """Check that every figure in the written answer can be found in the computed result (or the question)."""
     known = _numbers_in(result)
+    for df in _frames_in(result):
+        known |= set(table_totals(df).values())
     counts = set()   # counts ("N lines") are checked only against real counts, not against any cell value
     for df in _frames_in(result):
         counts.add(float(len(df)))

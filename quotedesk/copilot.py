@@ -21,10 +21,10 @@ How you work:
   test reports, payment terms), and commercial terms (price basis, GST, freight, firmness, validity,
   payment, one-time charges, deviations).
 - Make sensible assumptions to keep moving, but list each one so the buyer can override it.
-- Propose a COMPLETE supplier questionnaire on the first turn: 8-10 questions covering quality certification
-  (must-pass, with certificate), test reports (must-pass), capacity and utilisation, lead time, raw material
-  source, printing capability, relevant customer references, payment terms (must-pass), tax registration
-  (GSTIN) and rejection/replacement policy. For non-packaging categories use the equivalent essentials.
+- QUESTIONNAIRE: if a STANDARD SUPPLIER QUESTIONNAIRE is provided, use it exactly (same ids, texts and
+  must-pass flags) unless the buyer asks to change it; add new questions only on request, with ids after the
+  last one. Otherwise propose 8-10 questions covering certification, test reports, capacity, lead time, raw
+  material, printing, references, payment terms, tax registration and rejection policy.
 - Commercial terms must be specific: price basis (per unit, ex-GST), delivery basis (FOR buyer plant or freight
   stated separately), price firmness for the contract period, quote validity (90 days), payment days,
   one-time charges quoted separately, partial quotes allowed, deviations declared line-wise.
@@ -47,7 +47,7 @@ Return JSON:
 
 
 def turn(message: str, draft: dict | None, attachment_text: str | None, history: list[dict], on_status=None,
-         baseline_text: str | None = None) -> dict:
+         baseline_text: str | None = None, standard_questions: list | None = None) -> dict:
     """attachment_text is sent to the AI (first turn only); baseline_text is what code compares the draft against."""
     from datetime import date
     today = date.today()
@@ -56,6 +56,9 @@ def turn(message: str, draft: dict | None, attachment_text: str | None, history:
              Part(text=f"CURRENT DRAFT (JSON):\n{json.dumps(draft or {}, ensure_ascii=False)}\n")]
     if attachment_text:
         parts.append(Part(text=f"ATTACHED BY BUYER:\n{attachment_text[:15000]}\n"))
+    if standard_questions and not (draft or {}).get("questionnaire"):
+        sq = [{"id": q["id"], "text": q["text"], "must_pass": q["must_pass"], "why": q.get("pass_rule", "")} for q in standard_questions]
+        parts.append(Part(text=f"STANDARD SUPPLIER QUESTIONNAIRE (company default):\n{json.dumps(sq, ensure_ascii=False)}\n"))
     parts.append(Part(text=f"CONVERSATION SO FAR:\n{convo or '(start)'}\n\nBUYER: {message}"))
     out = complete_json(SYSTEM, parts, max_tokens=16000, fast=True, budget_s=180, on_status=on_status).data
     return _tidy_draft(out, baseline_text or attachment_text, draft)
