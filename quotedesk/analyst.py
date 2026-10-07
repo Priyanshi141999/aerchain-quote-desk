@@ -99,6 +99,9 @@ Refer to vendors by name (e.g. "Siam Pacific (A)").
 If the results are empty or show an error, say plainly what could not be answered and why.
 If the results say the requested data does not exist, START by saying so plainly, then present any proxy as a proxy.
 If the results show an ERROR, say "I couldn't compute this" and why, never that the data does not exist.
+A price marked excluded_from_ranking / suspected error is NOT "the cheapest": describe it as a suspected error (e.g.
+"₹4.08 is about a tenth of every other quote, almost certainly a misplaced decimal") and name the cheapest
+reliable quote instead. Say "saves ₹X" or "costs ₹X more", never "a saving of -₹X".
 Do not reuse numbers from earlier answers in the conversation; use only this question's computed results.
 
 Return JSON: {"answer_markdown": str, "caveats": [str], "followups": [str]}  (2-3 short follow-up questions)
@@ -287,6 +290,12 @@ def _render(result) -> str:
             parts.append(f"--- {k} ---\n{_render(v)}")
         return "\n".join(parts)[:14000]
     if isinstance(result, pd.DataFrame):
+        result = result.copy()
+        for c in list(result.columns):
+            cl = str(c).lower()
+            if pd.api.types.is_numeric_dtype(result[c]) and any(w in cl for w in ("total", "value", "spend", "cost", "saving", "diff")) \
+                    and result[c].abs().max() >= 1e5:
+                result[f"{c}__say_as"] = result[c].map(lambda v: fmt_inr(float(v)) if pd.notna(v) else "")
         return _facts_about(result) + "\n" + result.head(40).to_csv(index=False) + (
             f"... ({len(result) - 40} more rows not shown; use the counts above)" if len(result) > 40 else "")
     if isinstance(result, pd.Series):
