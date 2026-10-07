@@ -82,6 +82,11 @@ ss.setdefault("vendor_updates", {})  # vendor key -> evidence submitted in the p
 items, questions, rfq_terms, prev = load_rfq(DATA)
 
 
+def clar_deadline():
+    """The clarification window the buyer set (or the default): one deadline for every vendor."""
+    return ss.get("clar_deadline") or SETTINGS["clarification_deadline"]
+
+
 def log(action: str, detail: str, by: str = "Priya Raman (buyer)"):
     ss.audit.append({"time": datetime.now().strftime("%d %b %H:%M:%S"), "by": by, "action": action, "detail": detail})
 
@@ -473,7 +478,7 @@ elif page.startswith("3"):
     n_disp = int((sel["verification"] == "vendor_disputed").sum()) if "verification" in sel else 0
     st.progress(n_ver / max(n_priced, 1), text=f"{n_ver} of {n_priced} prices confirmed by vendors"
                 + (f" · {n_disp} disputed" if n_disp else "")
-                + f" · vendors must respond by {SETTINGS['clarification_deadline']:%a %d %b, %H:%M} IST")
+                + f" · vendors must respond by {clar_deadline():%a %d %b, %H:%M} IST")
     st.dataframe(disp.style.apply(style, axis=None), width="stretch", height=560,
                  column_config={"Item": st.column_config.TextColumn(width="medium")})
     if not best.empty:
@@ -522,6 +527,23 @@ elif page.startswith("3"):
 elif page.startswith("4"):
     st.header("Needs your attention")
     updates_banner()
+    with st.container(border=True):
+        st.markdown("**Clarification window** — vendors can send documents, confirmations and explanations until:")
+        _cur = clar_deadline()
+        cw1, cw2, cw3 = st.columns([2, 2, 2])
+        d_ = cw1.date_input("Date", value=_cur.date(), key="cw_date")
+        t_ = cw2.time_input("Time (IST)", value=_cur.time().replace(tzinfo=None), key="cw_time", step=1800)
+        if cw3.button("Set deadline for all vendors", key="cw_set"):
+            new_dl = datetime.combine(d_, t_).replace(tzinfo=_cur.tzinfo)
+            if new_dl <= SETTINGS["deadline"]:
+                st.error("The window must close after the RFQ deadline (01 Oct 2026, 18:00).")
+            else:
+                ss.clar_deadline = new_dl
+                log("Clarification window set", f"Vendors may respond until {new_dl:%d %b %Y, %H:%M} IST")
+                st.rerun()
+        _now = datetime.now(_cur.tzinfo)
+        st.caption(f"Currently: **{_cur:%a %d %b %Y, %H:%M} IST** — " + ("open" if _now <= _cur else "**closed**; vendors can no longer respond")
+                   + ". The same deadline applies to every vendor.")
     st.caption("Everything the system was unsure about, or that could change the award, worst first. Nothing here was silently decided for you.")
     Q = attention_queue(R, L)
     done = sum(1 for i, x in enumerate(Q) if f"{x['vendor']}|{x['line']}|{x['code']}|{i}" in ss.acks)
@@ -720,7 +742,7 @@ elif page.startswith("6"):
                         answers[r["id"]] = st.radio(r["ask"], ["Prices include freight to Hosur (FOR Hosur)", "Freight is extra"],
                                                     index=None, key=f"fr_{vk}")
                     st.divider()
-                _dl = SETTINGS["clarification_deadline"]
+                _dl = clar_deadline()
                 _open = datetime.now(_dl.tzinfo) <= _dl
                 st.caption(f"Respond by {_dl:%d %b %Y, %H:%M} IST — the same deadline applies to every vendor.")
                 submitted = st.form_submit_button("Submit to buyer", type="primary", disabled=not _open)
@@ -786,6 +808,12 @@ elif page.startswith("6"):
             sev = 0 if any(f["severity"] == "blocker" for f in l["flags"]) else (1 if l["confidence"] == "low" else (2 if doubts else 3))
             steps = [t for t in (l.get("trail") or [])[1:-1]]
             read = l["norm_inr"]
+            bset = ov if (ov and ov.get("source") == "buyer") else (ov or {}).get("buyer_set")
+            if bset:  # the buyer's value is now the reading the vendor is asked to confirm
+                read = bset["value"]
+                steps = [f"Set by the buyer: ₹{bset['value']:,.2f} — {bset['reason']}"]
+                doubts = []
+                sev = 1
             done = ov is not None and ov.get("source") == "vendor"
             rows.append({
                 "Line": it["id"], "Item": it["name"], "Qty": it["annual_qty"], "UoM": it["uom"],
@@ -795,11 +823,12 @@ elif page.startswith("6"):
                 "Is our reading correct?": "Yes" if done else ("No" if dp else None),
                 DISPUTE_COL: dp["explanation"] if dp else "",
                 "Why please check": (doubts[0][:140] if doubts else ""),
-                "Status": "✅ confirmed" if done else ("❓ sent to buyer for review" if dp else "awaiting your answer"),
+                "Status": "✅ confirmed" if done else ("❓ sent to buyer for review" if dp else
+                          ("✏️ updated by buyer — please confirm" if bset else "awaiting your answer")),
                 "_priority": sev, "_value": -((read or 0) * it["annual_qty"]),
             })
         df_p = pd.DataFrame(rows).sort_values(["_priority", "_value", "Line"]).drop(columns=["_priority", "_value"])
-        dl = SETTINGS["clarification_deadline"]
+        dl = clar_deadline()
         now = datetime.now(dl.tzinfo)
         open_ = now <= dl
         left = dl - now
@@ -831,8 +860,11 @@ elif page.startswith("6"):
                 ans, key = r["Is our reading correct?"], f"{vk}:{int(r['Line'])}"
                 read = r["We read it as (₹ per unit, ex-GST)"]
                 if ans == "Yes" and read is not None and not pd.isna(read):
+                    prev_ = ss.overrides.get(key) or {}
+                    bset_ = prev_ if prev_.get("source") == "buyer" else prev_.get("buyer_set")
                     ss.overrides[key] = {"value": float(read), "source": "vendor", "by": f"{v['name']} (vendor)",
-                                         "reason": "confirmed by vendor via portal", "at": datetime.now().isoformat()}
+                                         "reason": "confirmed by vendor via portal", "at": datetime.now().isoformat(),
+                                         **({"buyer_set": bset_} if bset_ else {})}
                     ss.disputes.pop(key, None)
                     n_conf += 1
                 elif ans == "No":

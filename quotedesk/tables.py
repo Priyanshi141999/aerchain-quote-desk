@@ -26,9 +26,20 @@ def line_table(results: dict, items: list[dict], overrides: dict | None = None, 
                 # a value confirmed at source settles doubts about the READING; spec/commercial blockers stay
                 settled = {"price_outlier", "low_confidence_reading", "converted_from_per_kg", "converted_from_area",
                            "price_range", "unit_unclear", "inferred_from_previous_contract"}
-                flags = [f for f in flags if f["code"] not in settled] + [
-                    {"code": verification, "severity": "info",
-                     "message": f"₹{ov['value']:,.2f} {'confirmed' if not changed else 'set'} by {ov['by']} on {str(ov.get('at',''))[:10]} ({ov['reason']})"}]
+                buyer_set = ov if src == "buyer" else ov.get("buyer_set")
+                if buyer_set:
+                    # the buyer's decision is the truth for this line: every open doubt on it is resolved by that decision
+                    verification = "vendor_confirmed" if src == "vendor" else "buyer_corrected"
+                    flags = [({**f, "severity": "info", "code": f"{f['code']}_resolved",
+                               "message": f"Resolved by buyer: {buyer_set['reason']}. (Was: {f['message']})"}
+                              if f["severity"] in ("blocker", "warning") else f) for f in flags]
+                    msg = (f"₹{ov['value']:,.2f} set by {buyer_set['by']} on {str(buyer_set.get('at',''))[:10]} ({buyer_set['reason']})"
+                           + (f"; confirmed by {ov['by']}" if src == "vendor" else "; awaiting vendor confirmation"))
+                    flags.append({"code": verification, "severity": "info", "message": msg})
+                else:
+                    flags = [f for f in flags if f["code"] not in settled] + [
+                        {"code": verification, "severity": "info",
+                         "message": f"₹{ov['value']:,.2f} {'confirmed' if not changed else 'set'} by {ov['by']} on {str(ov.get('at',''))[:10]} ({ov['reason']})"}]
             dp = disputes.get(f"{vk}:{it['id']}")
             if dp and not ov:
                 verification = "vendor_disputed"
