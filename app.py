@@ -203,7 +203,10 @@ if page.startswith("1"):
             with st.status("Co-pilot is drafting the RFQ…", expanded=True) as status:
                 st.write("Reading last year's contract and applying your changes (usually 20–60 s).")
                 try:
+                    if len(ss.copilot_msgs) <= 2:
+                        ss.copilot_baseline = attach_text  # what code compares every later draft against
                     out = copilot.turn(msg, ss.draft, attach_text if len(ss.copilot_msgs) <= 2 else None, ss.copilot_msgs[:-1],
+                                       baseline_text=ss.get("copilot_baseline"),
                                        on_status=lambda m: status.update(label=f"Co-pilot is drafting… {m}"))
                     ss.draft = out.get("draft") or ss.draft
                     reply = out.get("reply", "")

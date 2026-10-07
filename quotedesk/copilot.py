@@ -46,7 +46,9 @@ Return JSON:
 """
 
 
-def turn(message: str, draft: dict | None, attachment_text: str | None, history: list[dict], on_status=None) -> dict:
+def turn(message: str, draft: dict | None, attachment_text: str | None, history: list[dict], on_status=None,
+         baseline_text: str | None = None) -> dict:
+    """attachment_text is sent to the AI (first turn only); baseline_text is what code compares the draft against."""
     from datetime import date
     today = date.today()
     convo = "\n".join(f"{h['role'].upper()}: {h['content']}" for h in history[-8:])
@@ -56,47 +58,116 @@ def turn(message: str, draft: dict | None, attachment_text: str | None, history:
         parts.append(Part(text=f"ATTACHED BY BUYER:\n{attachment_text[:15000]}\n"))
     parts.append(Part(text=f"CONVERSATION SO FAR:\n{convo or '(start)'}\n\nBUYER: {message}"))
     out = complete_json(SYSTEM, parts, max_tokens=16000, fast=True, budget_s=180, on_status=on_status).data
-    return _tidy_draft(out, attachment_text)
+    return _tidy_draft(out, baseline_text or attachment_text, draft)
 
 
-def _contract_ids(attachment_text: str | None) -> list[int]:
-    """Line numbers present in an attached CSV contract (counted by code, not by the AI)."""
-    if not attachment_text:
+def _rows(text: str | None) -> list[dict]:
+    if not text:
         return []
     import csv, io
     try:
-        rows = list(csv.DictReader(io.StringIO(attachment_text)))
-        key = next((k for k in ("line_no", "line", "id", "item_code") if rows and k in rows[0]), None)
-        return sorted(int(float(r[key])) for r in rows if key and str(r.get(key, "")).strip())
+        return list(csv.DictReader(io.StringIO(text)))
     except Exception:
         return []
 
 
-def _tidy_draft(out: dict, attachment_text: str | None) -> dict:
-    """Deterministic clean-up: renumber new items into free item codes and write an exact summary."""
+def _num(x):
+    try:
+        return round(float(str(x).replace(",", "")), 3)
+    except Exception:
+        return None
+
+
+def _dims(x) -> tuple:
+    import re
+    return tuple(int(float(n)) for n in re.findall(r"\d+(?:\.\d+)?", str(x or ""))[:3])
+
+
+def _ply(x) -> str:
+    import re
+    m = re.search(r"(\d)\s*-?\s*ply", str(x or ""), re.I)
+    return m.group(1) if m else ""
+
+
+def _sig(line: dict) -> dict:
+    """The spec fields a vendor prices on, normalised so formatting differences don't count as changes."""
+    return {"dims": _dims(line.get("dims") or line.get("dimensions")),
+            "bf": _num(line.get("bf") if "bf" in line else line.get("bursting_factor_bf")),
+            "qty": _num(line.get("annual_qty")),
+            "colours": _num(line.get("print_colours")),
+            "ply": _ply(line.get("board") or line.get("board_grade"))}
+
+
+def _diff(a: dict, b: dict) -> list[str]:
+    names = {"dims": "dimensions", "bf": "BF", "qty": "quantity", "colours": "print colours", "ply": "ply"}
+    sa, sb = _sig(a), _sig(b)
+    return [names[k] for k in sa if sa[k] not in (None, "", ()) and sb[k] not in (None, "", ()) and sa[k] != sb[k]] + \
+           [names[k] for k in sa if sa[k] in (None, "", ()) and sb[k] not in (None, "", ())]
+
+
+def _tidy_draft(out: dict, baseline_text: str | None, prev_draft: dict | None = None) -> dict:
+    """Deterministic clean-up. Code, not the AI, decides line numbers and what is new / changed."""
+    import re
     d = out.get("draft") or {}
     lines = d.get("lines") or []
     if not lines:
         return out
-    contract = _contract_ids(attachment_text)
-    new = [l for l in lines if l.get("status") == "new"]
-    keep = [l for l in lines if l.get("status") != "new"]
-    used = {int(l["id"]) for l in keep if str(l.get("id", "")).lstrip("-").isdigit()}
-    top = max(used | set(contract) | {0})
-    free = [n for n in range(1, top + 1) if n not in used] + list(range(top + 1, top + 1 + len(new)))
-    for l, n in zip(new, free):
+    base = {}
+    for r in _rows(baseline_text):
+        k = next((r[c] for c in ("line_no", "line", "id", "item_code") if c in r and str(r[c]).strip()), None)
+        if k is not None:
+            base[int(float(k))] = r
+    prev = {int(l["id"]): l for l in (prev_draft or {}).get("lines", []) if str(l.get("id", "")).isdigit()}
+
+    # 1. numbering: lines that are neither in the contract nor in the previous draft are new and take free item codes
+    def known(l):
+        i = l.get("id")
+        return str(i).isdigit() and (int(i) in base or int(i) in prev)
+    fresh = [l for l in lines if not known(l)]
+    keep = [l for l in lines if known(l)]
+    used = {int(l["id"]) for l in keep}
+    top = max(used | set(base) | {0})
+    free = [n for n in range(1, top + 1) if n not in used] + list(range(top + 1, top + 1 + len(fresh)))
+    for l, n in zip(fresh, free):
         l["id"] = n
-    d["lines"] = sorted(keep + new, key=lambda l: int(l.get("id") or 0))
-    n_new = len(new)
-    n_chg = sum(1 for l in keep if l.get("status") == "changed")
-    summary = f"**Draft: {len(d['lines'])} lines**"
-    if contract:
-        summary += f" · {len(contract)} carried over from last year's contract"
-    summary += f" · {n_chg} changed · {n_new} new"
-    if new:
-        summary += " (" + ", ".join(f"line {l['id']}: {l.get('name', '')}" for l in new) + ")"
-    import re
+    lines = sorted(keep + fresh, key=lambda l: int(l["id"]))
+
+    # 2. status against last year's contract (computed, never taken from the AI)
+    for l in lines:
+        i = int(l["id"])
+        if base:
+            if i not in base:
+                l["status"] = "new"
+            else:
+                ch = _diff(base[i], l)
+                l["status"] = "changed" if ch else "unchanged"
+                l["notes"] = (f"Changed vs last year: {', '.join(ch)}. " if ch else "") + (l.get("notes") or "").replace("Changed vs last year:", "").strip()
+    d["lines"] = lines
+    out["draft"] = d
+
+    # 3. what changed in THIS message (vs the previous draft)
+    turn_bits = []
+    if prev:
+        added = [l for l in lines if int(l["id"]) not in prev]
+        removed = [i for i in prev if i not in {int(l['id']) for l in lines}]
+        edited = [(l, _diff(prev[int(l["id"])], l)) for l in lines if int(l["id"]) in prev]
+        edited = [(l, c) for l, c in edited if c]
+        if added:
+            turn_bits.append("added " + ", ".join(f"line {l['id']}" for l in added))
+        if removed:
+            turn_bits.append("removed " + ", ".join(f"line {i}" for i in removed))
+        for l, c in edited:
+            turn_bits.append(f"line {l['id']}: {', '.join(c)} updated")
+
+    new = [l for l in lines if l.get("status") == "new"]
+    chg = [l for l in lines if l.get("status") == "changed"]
+    summary = f"**Draft: {len(lines)} lines**"
+    if base:
+        summary += f" · {len(lines) - len(new)} from last year's contract · {len(chg)} changed" + \
+                   (f" ({', '.join(f'line {l[chr(105) + chr(100)]}' for l in chg)})" if chg else "") + \
+                   f" · {len(new)} new" + (f" ({', '.join(f'line {l[chr(105) + chr(100)]}' for l in new)})" if new else "")
+    if prev:
+        summary += "  \n**This message:** " + ("; ".join(turn_bits) if turn_bits else "no change to the line items")
     prose = re.sub(r"\b(all|the)\s+\d+\s+(items|lines|line items)\b", r"\1 \2", out.get("reply") or "", flags=re.I)
     out["reply"] = summary + "\n\n" + prose
-    out["draft"] = d
     return out
