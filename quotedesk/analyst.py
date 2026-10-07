@@ -92,7 +92,8 @@ results, leave it out and say it was not computed. Be concise and
 decision-oriented: lead with the answer (who wins what, and the total), then the 2-4 facts that matter (e.g. how many
 lines each vendor wins, which lines have no eligible quote, WHY vendors are excluded, using VENDOR FACTS), then
 caveats that could change the decision (unqualified vendors, suspected errors, missing lines, unknown freight, conditional discounts, late or
-expired offers). Write large amounts in crore or lakh with two decimals (₹4.55 Cr, ₹24.34 lakh), never with ".0" endings.
+expired offers). Money: when a result has a "<name>__say_as" value, quote THAT string exactly (it is already converted to crore/lakh).
+Never convert units yourself and never print raw rupee figures like ₹26559500.0. 1 crore = 100 lakh.
 Refer to vendors by name (e.g. "Siam Pacific (A)").
 If the results are empty or show an error, say plainly what could not be answered and why.
 If the results say the requested data does not exist, START by saying so plainly, then present any proxy as a proxy.
@@ -230,11 +231,40 @@ def _facts_about(df: pd.DataFrame) -> str:
         out.append("lines won per vendor: " + ", ".join(f"{k}: {v} lines" for k, v in wins.items()))
         if "annual_value" in df.columns:
             by = df.groupby(df["winner"].fillna("none"))["annual_value"].sum().round(0).to_dict()
-            out.append("annual value per winner (INR): " + ", ".join(f"{k}: {v:,.0f}" for k, v in by.items()))
+            out.append("annual value per winner: " + ", ".join(f"{k}: {fmt_inr(v)}" for k, v in by.items()))
+            out.append(f"table total annual value: {fmt_inr(float(df['annual_value'].sum()))}")
     return " | ".join(out)
 
 
+def fmt_inr(x: float) -> str:
+    """₹ amount the way an Indian buyer reads it."""
+    a = abs(x)
+    sign = "-" if x < 0 else ""
+    if a >= 1e7:
+        return f"{sign}₹{a / 1e7:.2f} Cr"
+    if a >= 1e5:
+        return f"{sign}₹{a / 1e5:.2f} lakh"
+    return f"{sign}₹{a:,.2f}"
+
+
+def _annotate_money(obj, key=""):
+    """Add ready-to-quote crore/lakh strings next to big amounts so the writer never converts units itself."""
+    if isinstance(obj, dict):
+        out = {}
+        for k, v in obj.items():
+            out[k] = _annotate_money(v, k)
+            if isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(v, bool) and abs(float(v)) >= 1e5 \
+                    and not set(str(k).lower().replace("-", "_").split("_")) & {"qty", "quantity", "count", "line", "lines", "n"}:
+                out[f"{k}__say_as"] = fmt_inr(float(v))
+        return out
+    if isinstance(obj, (list, tuple)):
+        return [_annotate_money(v) for v in obj]
+    return obj
+
+
 def _render(result) -> str:
+    if isinstance(result, dict):
+        result = _annotate_money(result)
     if isinstance(result, dict) and any(isinstance(v, (pd.DataFrame, pd.Series)) for v in result.values()):
         parts = []
         for k, v in result.items():
@@ -246,7 +276,7 @@ def _render(result) -> str:
     if isinstance(result, pd.Series):
         return result.head(40).to_string()
     try:
-        return json.dumps(result, default=str, indent=1)[:6000]
+        return json.dumps(result, default=str, indent=1, ensure_ascii=False)[:6000]
     except Exception:
         return str(result)[:6000]
 
@@ -301,8 +331,11 @@ def verify_numbers(answer: str, result, question: str = "") -> dict:
         for c in df.columns:
             if pd.api.types.is_integer_dtype(df[c]) and any(k in str(c).lower() for k in ("count", "lines", "n_", "num")):
                 counts |= {float(v) for v in df[c].dropna().values}
-            if not pd.api.types.is_numeric_dtype(df[c]) and df[c].nunique() <= 12:
-                counts |= {float(v) for v in df[c].fillna("∅").value_counts().values}
+            try:
+                if not pd.api.types.is_numeric_dtype(df[c]) and df[c].nunique() <= 12:
+                    counts |= {float(v) for v in df[c].fillna("∅").value_counts().values}
+            except TypeError:  # columns holding lists
+                pass
         if "winner" in df.columns:
             counts.add(float(df["winner"].isna().sum()))
     def _scalar_counts(o):
