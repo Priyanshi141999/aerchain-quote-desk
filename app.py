@@ -589,7 +589,13 @@ elif page.startswith("6"):
         if not fixable:
             st.success("Nothing further is needed from you for eligibility.")
         else:
-            st.markdown(f"To be considered for award, please resolve the following **{len(fixable)} item(s)**:")
+            must_fix = [r for r in fixable if r["id"] in ("Q1", "Q2", "Q8")]
+            if must_fix:
+                st.markdown(f"To be **eligible for award**, please resolve the following **{len(fixable)} item(s)** "
+                            f"({len(must_fix)} must-pass):")
+            else:
+                st.markdown(f"Your quote meets the must-pass requirements. To **finalise** it, please resolve "
+                            f"**{len(fixable)} commercial item(s)**:")
             with st.form(f"elig_{vk}"):
                 answers = {}
                 for r in fixable:
