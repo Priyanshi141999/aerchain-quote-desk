@@ -32,8 +32,9 @@ DATA AVAILABLE TO YOUR CODE (already loaded as pandas DataFrames):
   freight_basis, discounts (text), one_time_charges (text), late_submission (bool), offer_expired (bool),
   blockers, warnings.
 - `last_year`: last year's rate contract with the incumbent (Annapurna), one row per line it covered. Columns:
-  line_no, item, board_grade, bursting_factor_bf, annual_qty, uom, price_inr_ex_gst. Lines 20 and 24 are new this
-  year (not in it); line 5's spec changed (20 BF last year, 22 BF now). Use it for year-on-year questions.
+  line (same numbering as this RFQ, join on it), ly_item, ly_bf, ly_annual_qty, ly_price_inr (INR per unit ex-GST).
+  Lines 20 and 24 are new this year (not in it); line 5's spec changed (20 BF last year, 22 BF now).
+  For year-on-year questions compare unit prices on this year's quantities: (price_inr - ly_price_inr) * annual_qty.
 - `items`: the 30 RFQ lines (id, name, form, board, dims, bf, print_colours, annual_qty, uom, weight_kg).
 - Libraries: pd, np, px (plotly.express). Do NOT import anything. Do not read or write files.
 
@@ -97,6 +98,7 @@ Never convert units yourself and never print raw rupee figures like ₹26559500.
 Refer to vendors by name (e.g. "Siam Pacific (A)").
 If the results are empty or show an error, say plainly what could not be answered and why.
 If the results say the requested data does not exist, START by saying so plainly, then present any proxy as a proxy.
+If the results show an ERROR, say "I couldn't compute this" and why, never that the data does not exist.
 Do not reuse numbers from earlier answers in the conversation; use only this question's computed results.
 
 Return JSON: {"answer_markdown": str, "caveats": [str], "followups": [str]}  (2-3 short follow-up questions)
@@ -130,8 +132,20 @@ def cheapest_split(lines: pd.DataFrame, vendors_allowed=None, basis: str = "pric
     return pd.DataFrame(out)
 
 
+def _vendor_key(lines: pd.DataFrame, vendor: str) -> str:
+    """Accept a vendor key ('B') or any part of its name ('Deccan')."""
+    keys = set(lines.vendor.unique())
+    if vendor in keys:
+        return vendor
+    hits = lines[lines.vendor_name.str.contains(str(vendor), case=False, regex=False)].vendor.unique()
+    if len(hits) == 1:
+        return hits[0]
+    raise ValueError(f"Unknown vendor '{vendor}'. Use one of {sorted(keys)}.")
+
+
 def single_vendor(lines: pd.DataFrame, vendor: str, basis: str = "price_inr", discount_pct: float = 0.0) -> dict:
     """Award everything to one vendor. Reports exactly which lines are missing or suspect instead of hiding them."""
+    vendor = _vendor_key(lines, vendor)
     v = lines[lines.vendor == vendor]
     priced = v[v[basis].notna()]
     ok = priced[~priced.excluded_from_ranking]
@@ -171,6 +185,8 @@ def vendor_totals(lines: pd.DataFrame, basis: str = "price_inr", vendors_allowed
 
 def same_lines_comparison(split_df: pd.DataFrame, vendor_result: dict, lines: pd.DataFrame, basis: str = "price_inr") -> dict:
     """Compare a split with a single-vendor award over exactly the lines both can cover."""
+    if not isinstance(vendor_result, dict) or "vendor" not in vendor_result:
+        raise ValueError("Pass the dict returned by single_vendor(...) as the second argument.")
     v = lines[(lines.vendor == vendor_result["vendor"]) & lines[basis].notna() & (~lines.excluded_from_ranking)]
     common = sorted(set(v.line) & set(split_df[split_df.winner.notna()].line))
     split_total = float(split_df[split_df.line.isin(common)].annual_value.sum())
@@ -380,10 +396,13 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
     L, V, I = _safe_frames(lines, vendors, items)
     LY = None
     if last_year is not None and not last_year.empty:
-        LY = last_year.rename(columns={"line_no": "line_no"})[[c for c in ("line_no", "item", "board_grade", "bursting_factor_bf",
-                                                                             "annual_qty", "uom", "price_inr_ex_gst") if c in last_year.columns]].copy()
-        LY["price_inr_ex_gst"] = pd.to_numeric(LY["price_inr_ex_gst"], errors="coerce")
-        LY["line_no"] = pd.to_numeric(LY["line_no"], errors="coerce")
+        LY = pd.DataFrame({
+            "line": pd.to_numeric(last_year["line_no"], errors="coerce").astype("Int64"),
+            "ly_item": last_year.get("item"),
+            "ly_bf": last_year.get("bursting_factor_bf"),
+            "ly_annual_qty": pd.to_numeric(last_year.get("annual_qty"), errors="coerce"),
+            "ly_price_inr": pd.to_numeric(last_year["price_inr_ex_gst"], errors="coerce"),
+        })
     hist = ""
     for h in (history or [])[-4:]:
         hist += f"Q: {h['q']}\nA (summary): {h.get('answer','')[:400]}\n"
