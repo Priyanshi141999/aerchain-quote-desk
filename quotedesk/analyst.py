@@ -38,10 +38,13 @@ VETTED HELPERS (use them for award scenarios instead of writing your own arithme
 - cheapest_split(lines, vendors_allowed=None, basis="price_inr", include_suspect=False) -> DataFrame with one row
   per RFQ line: line, item, annual_qty, n_eligible, winner, winner_name, unit_price, annual_value, runner_up,
   runner_up_price. Lines with no eligible quote have winner=None (report them!).
-- single_vendor(lines, vendor, basis="price_inr", discount_pct=0) -> dict with total_reliable_lines,
-  total_after_discount, lines_missing, lines_suspect_excluded.
-- same_lines_comparison(split_df, single_vendor_result, lines, basis="price_inr") -> dict comparing both
-  scenarios over exactly the same lines, with lines_left_out. ALWAYS use this when comparing a split with a
+- single_vendor(lines, vendor, basis="price_inr", discount_pct=0) -> dict with EXACTLY these keys:
+  vendor, lines_priced_reliably, total_reliable_lines, total_after_discount, discount_pct, lines_missing,
+  lines_suspect_excluded, note.
+- same_lines_comparison(split_df, single_vendor_result, lines, basis="price_inr") -> dict with EXACTLY these keys:
+  lines_compared, lines_left_out, split_total, vendor_total, vendor_minus_split (negative = vendor cheaper).
+  It compares both scenarios over exactly the same lines.
+- Use only the keys listed above; do not invent others. ALWAYS use this when comparing a split with a
   single-vendor award, so the two totals cover the same goods.
 
 RULES
@@ -306,7 +309,11 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
                f"Previous conversation:\n{hist or '(none)'}\n\nQUESTION: {question}")
     plan = complete_json(PLAN_SYSTEM, [Part(text=context)], max_tokens=6000, fast=True, on_status=on_status).data
     out = run_code(plan.get("code", ""), L, V, I)
-    if "error" in out:  # one self-correction round, with the real error
+    for _ in range(2):  # self-correction: show the model its real error and let it fix the code
+        if "error" not in out:
+            break
+        if on_status:
+            on_status("calculation hit an error, fixing it…")
         fix_ctx = context + f"\n\nYour previous code:\n{plan.get('code')}\n\nIt failed with:\n{out['error']}\nFix it."
         plan = complete_json(PLAN_SYSTEM, [Part(text=fix_ctx)], max_tokens=6000, fast=True, on_status=on_status).data
         out = run_code(plan.get("code", ""), L, V, I)
