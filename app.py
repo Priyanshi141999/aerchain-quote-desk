@@ -655,12 +655,6 @@ elif page.startswith("6"):
         others = [r for r in reqs if r["kind"] == "buyer_decision"]
         if others:
             st.caption("Also under the buyer's review (no action needed from you): " + " ".join(r["why"] for r in others))
-        with st.expander("Demo only: sample documents a vendor might upload"):
-            st.caption("Download one, then upload it above as the matching vendor. One of them should be rejected.")
-            samples = sorted((DATA / "portal_samples").glob("*"))
-            sc = st.columns(2)
-            for i, f in enumerate(samples):
-                sc[i % 2].download_button(f.name, f.read_bytes(), file_name=f.name, key=f"smp_{vk}_{f.name}", width="stretch")
 
     tab_lines.markdown("Below is how we read every line. **Please check each value and confirm it, or type the correct one.** "
                        "Lines that most need your check are at the top: suspected errors first, then readings we were unsure "
