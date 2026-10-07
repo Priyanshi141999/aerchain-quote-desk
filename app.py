@@ -75,6 +75,7 @@ ss.setdefault("chat", [])            # analyst conversation
 ss.setdefault("copilot_msgs", [])
 ss.setdefault("draft", None)
 ss.setdefault("published", False)
+ss.setdefault("disputes", {})          # "A:13" -> vendor's explanation of why our reading is wrong
 ss.setdefault("buyer_decisions", {})   # vendor key -> buyer's disqualify / accept decisions
 ss.setdefault("vendor_updates", {})  # vendor key -> evidence submitted in the portal after the quote
 
@@ -143,7 +144,7 @@ MUST = [q["id"] for q in EFFQ["questions"] if q["must_pass"]]
 R = (updates.apply_buyer_decisions(
         updates.apply(updates.requalify(ss["results"], EFFQ), ss.vendor_updates, EFFQ), ss.buyer_decisions)
      if ss.get("results") else {})
-L = line_table(R, items, ss.overrides) if R else pd.DataFrame()
+L = line_table(R, items, ss.overrides, ss.disputes) if R else pd.DataFrame()
 V = vendor_table(R) if R else pd.DataFrame()
 
 
@@ -442,7 +443,7 @@ elif page.startswith("3"):
                             ("freight ?" if col == "landed_inr" and m.price_inr is not None else "—"))
             else:
                 mark = {"vendor_confirmed": " ✅", "vendor_corrected": " ✅", "buyer_corrected": " ✏️",
-                        "buyer_confirmed": " ✏️"}.get(getattr(m, "verification", "unverified"), "")
+                        "buyer_confirmed": " ✏️", "vendor_disputed": " ❓"}.get(getattr(m, "verification", "unverified"), "")
                 if m.worst_flag == 0:
                     mark += " 🛑"
                 vals.append(f"{x:,.2f}{mark}")
@@ -466,9 +467,13 @@ elif page.startswith("3"):
     n_ver = int(sel["verification"].astype(str).str.startswith("vendor").sum()) if "verification" in sel else 0
     n_priced = int(sel[col].notna().sum())
     st.markdown(f"**₹ per unit, ex-GST{' + freight' if col == 'landed_inr' else ''}** · green = lowest eligible · "
-                "✅ confirmed by vendor · ✏️ set by buyer · 🛑 blocker, needs your decision · no mark = read by AI, "
+                "✅ confirmed by vendor · ❓ vendor says our reading is wrong (see their working) · ✏️ set by buyer · "
+                "🛑 blocker, needs your decision · no mark = read by AI, "
                 "awaiting vendor confirmation · strikethrough = suspected error, excluded from ranking")
-    st.progress(n_ver / max(n_priced, 1), text=f"{n_ver} of {n_priced} prices confirmed by vendors")
+    n_disp = int((sel["verification"] == "vendor_disputed").sum()) if "verification" in sel else 0
+    st.progress(n_ver / max(n_priced, 1), text=f"{n_ver} of {n_priced} prices confirmed by vendors"
+                + (f" · {n_disp} disputed" if n_disp else "")
+                + f" · vendors must respond by {SETTINGS['clarification_deadline']:%a %d %b, %H:%M} IST")
     st.dataframe(disp.style.apply(style, axis=None), width="stretch", height=560,
                  column_config={"Item": st.column_config.TextColumn(width="medium")})
     if not best.empty:
@@ -488,6 +493,7 @@ elif page.startswith("3"):
         src = row['source'] or {}
         st.markdown(f"**Found in:** `{src.get('file', '—')}` · {src.get('location', '')}  \n> {src.get('quote', '')}")
         ver_txt = {"vendor_confirmed": "✅ confirmed by the vendor", "vendor_corrected": "✅ corrected by the vendor",
+                   "vendor_disputed": "❓ the vendor says this reading is wrong; see their working below",
                    "buyer_corrected": "✏️ set by the buyer", "buyer_confirmed": "✏️ confirmed by the buyer"}.get(row.get('verification', 'unverified'), "read by AI, awaiting vendor confirmation")
         st.markdown(f"**Status:** {ver_txt} · AI reading confidence: **{row['confidence']}**")
         st.markdown("**How we got to the comparable number**")
@@ -714,7 +720,10 @@ elif page.startswith("6"):
                         answers[r["id"]] = st.radio(r["ask"], ["Prices include freight to Hosur (FOR Hosur)", "Freight is extra"],
                                                     index=None, key=f"fr_{vk}")
                     st.divider()
-                submitted = st.form_submit_button("Submit to buyer", type="primary")
+                _dl = SETTINGS["clarification_deadline"]
+                _open = datetime.now(_dl.tzinfo) <= _dl
+                st.caption(f"Respond by {_dl:%d %b %Y, %H:%M} IST — the same deadline applies to every vendor.")
+                submitted = st.form_submit_button("Submit to buyer", type="primary", disabled=not _open)
             if submitted:
                 up = dict(ss.vendor_updates.get(vk, {}))
                 up["at"] = datetime.now().strftime("%Y-%m-%d")
@@ -759,67 +768,92 @@ elif page.startswith("6"):
         if others:
             st.caption("Also under the buyer's review (no action needed from you): " + " ".join(r["why"] for r in others))
 
-    tab_lines.markdown("Below is how we read every line. **Please check each value and confirm it, or type the correct one.** "
-                       "Lines that most need your check are at the top: suspected errors first, then readings we were unsure "
-                       "of, then converted units; within each, the lines with the most money at stake.")
     with tab_lines:
+        st.markdown("Below is how we read every line. For each one, tell us whether **our reading is correct**. "
+                    "If it isn't, **show how your quoted figure converts to a price per our unit of measure** "
+                    "(e.g. \"₹38/kg × 0.21 kg actual box weight = ₹7.98 per box\"). "
+                    "This step verifies your existing quote; **prices cannot be changed here**. "
+                    "Lines that most need your check are at the top.")
+        DISPUTE_COL = "If not, show how your quote converts to ₹ per unit"
         rows = []
         for l in v["lines"]:
             it = next(x for x in items if x["id"] == l["rfq_line"])
-            ov = ss.overrides.get(f"{vk}:{it['id']}")
+            key = f"{vk}:{it['id']}"
+            ov, dp = ss.overrides.get(key), ss.disputes.get(key)
             doubts = [f["message"] for f in l["flags"] if f["severity"] in ("blocker", "warning")]
             if l["confidence"] == "low":
                 doubts.insert(0, "We were not sure we read this correctly.")
             sev = 0 if any(f["severity"] == "blocker" for f in l["flags"]) else (1 if l["confidence"] == "low" else (2 if doubts else 3))
             steps = [t for t in (l.get("trail") or [])[1:-1]]
             read = l["norm_inr"]
+            done = ov is not None and ov.get("source") == "vendor"
             rows.append({
                 "Line": it["id"], "Item": it["name"], "Qty": it["annual_qty"], "UoM": it["uom"],
                 "You wrote": l.get("as_written") or ("not quoted" if read is None else "—"),
                 "How we converted it": " → ".join(steps) if steps else "no conversion needed",
-                f"We read it as (₹ per unit, ex-GST)": read,
-                "Correct value (₹ per unit, ex-GST)": ov["value"] if ov else read,
+                "We read it as (₹ per unit, ex-GST)": read,
+                "Is our reading correct?": "Yes" if done else ("No" if dp else None),
+                DISPUTE_COL: dp["explanation"] if dp else "",
                 "Why please check": (doubts[0][:140] if doubts else ""),
-                "Status": ("✅ confirmed" if ov and ov.get("source") == "vendor" else "awaiting your confirmation"),
-                "_priority": sev, "_value": -((l["norm_inr"] or 0) * it["annual_qty"]),
+                "Status": "✅ confirmed" if done else ("❓ sent to buyer for review" if dp else "awaiting your answer"),
+                "_priority": sev, "_value": -((read or 0) * it["annual_qty"]),
             })
         df_p = pd.DataFrame(rows).sort_values(["_priority", "_value", "Line"]).drop(columns=["_priority", "_value"])
-        n_check = int((df_p["Why please check"] != "").sum())
-        n_done = int((df_p["Status"] == "✅ confirmed").sum())
-        c1, c2, c3 = st.columns(3)
+        dl = SETTINGS["clarification_deadline"]
+        now = datetime.now(dl.tzinfo)
+        open_ = now <= dl
+        left = dl - now
+        c1, c2, c3, c4 = st.columns(4)
         c1.metric("Lines in your quote", len(df_p))
-        c2.metric("Need a closer look", n_check)
-        c3.metric("Confirmed so far", n_done)
+        c2.metric("Need a closer look", int((df_p["Why please check"] != "").sum()))
+        c3.metric("Confirmed so far", int((df_p["Status"] == "✅ confirmed").sum()))
+        c4.metric("Respond by", f"{dl:%d %b, %H:%M}",
+                  delta=(f"{left.days} d {left.seconds // 3600} h left" if open_ else "closed"),
+                  delta_color="off" if open_ else "inverse")
+        if not open_:
+            st.error(f"The clarification window closed on {dl:%d %b %Y, %H:%M} IST. Responses are no longer accepted.")
         edited = st.data_editor(
             df_p, hide_index=True, width="stretch", height=460, key=f"portal_{vk}",
-            disabled=[c for c in df_p.columns if c != "Correct value (₹ per unit, ex-GST)"],
+            disabled=[c for c in df_p.columns if c not in ("Is our reading correct?", DISPUTE_COL)] if open_ else True,
             column_config={
-                "Correct value (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f", min_value=0.0,
-                    help="Leave as is to confirm our reading, or type the correct price per unit, excluding GST."),
+                "Is our reading correct?": st.column_config.SelectboxColumn(options=["Yes", "No"], required=False,
+                    help="Yes confirms our reading. No sends your working to the buyer for review."),
+                DISPUTE_COL: st.column_config.TextColumn(width="large", max_chars=300,
+                    help="Show the steps from your quoted figure to a price per our unit, excluding GST."),
                 "We read it as (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f"),
                 "How we converted it": st.column_config.TextColumn(width="large"),
                 "Why please check": st.column_config.TextColumn(width="large"),
             })
-        st.caption("Changing a value marks it as corrected by you; leaving it unchanged confirms our reading.")
-        if st.button("✅ Confirm all lines and send to buyer", type="primary"):
-            n_conf = n_corr = 0
+        if st.button("📨 Send my answers to the buyer", type="primary", disabled=not open_):
+            n_conf = n_disp = 0
+            missing = []
             for _, r in edited.iterrows():
-                val = r["Correct value (₹ per unit, ex-GST)"]
-                if val is None or pd.isna(val):
-                    continue
+                ans, key = r["Is our reading correct?"], f"{vk}:{int(r['Line'])}"
                 read = r["We read it as (₹ per unit, ex-GST)"]
-                changed = read is None or pd.isna(read) or abs(float(val) - float(read)) > 0.005
-                ss.overrides[f"{vk}:{int(r['Line'])}"] = {"value": float(val), "source": "vendor", "by": f"{v['name']} (vendor)",
-                                                         "reason": "corrected by vendor via portal" if changed else "confirmed by vendor via portal",
-                                                         "at": datetime.now().isoformat()}
-                if changed:
-                    n_corr += 1
-                    log("Vendor correction", f"{vk} line {int(r['Line'])}: {read} → {float(val):.2f}", by=f"{v['name']} (vendor)")
-                else:
+                if ans == "Yes" and read is not None and not pd.isna(read):
+                    ss.overrides[key] = {"value": float(read), "source": "vendor", "by": f"{v['name']} (vendor)",
+                                         "reason": "confirmed by vendor via portal", "at": datetime.now().isoformat()}
+                    ss.disputes.pop(key, None)
                     n_conf += 1
-            log("Vendor confirmation", f"{vk}: {n_conf} lines confirmed, {n_corr} corrected", by=f"{v['name']} (vendor)")
-            st.success(f"Thank you. {n_conf} values confirmed and {n_corr} corrected; the buyer can now see them as vendor-confirmed.")
+                elif ans == "No":
+                    why = str(r[DISPUTE_COL] or "").strip()
+                    if not why:
+                        missing.append(int(r["Line"]))
+                        continue
+                    if ss.disputes.get(key, {}).get("explanation") != why:
+                        ss.disputes[key] = {"explanation": why, "by": f"{v['name']} (vendor)", "at": datetime.now().isoformat()}
+                        log("Vendor disputed a reading", f"{vk} line {int(r['Line'])}: \"{why}\"", by=f"{v['name']} (vendor)")
+                    n_disp += 1
+            if n_conf or n_disp:
+                log("Vendor confirmation", f"{vk}: {n_conf} lines confirmed, {n_disp} disputed with working",
+                    by=f"{v['name']} (vendor)")
+            ss.portal_line_msg = (n_conf, n_disp, missing)
             st.rerun()
+        if ss.get("portal_line_msg"):
+            n_conf, n_disp, missing = ss.pop("portal_line_msg")
+            st.success(f"Sent: {n_conf} readings confirmed, {n_disp} sent to the buyer with your working.")
+            if missing:
+                st.error(f"Lines {missing}: you answered No but didn't show your working, so they weren't sent.")
 
 # ================================================================== 7. AUDIT LOG
 elif page.startswith("7"):

@@ -6,8 +6,9 @@ import pandas as pd
 SEV_ORDER = {"blocker": 0, "warning": 1, "info": 2}
 
 
-def line_table(results: dict, items: list[dict], overrides: dict | None = None) -> pd.DataFrame:
+def line_table(results: dict, items: list[dict], overrides: dict | None = None, disputes: dict | None = None) -> pd.DataFrame:
     overrides = overrides or {}
+    disputes = disputes or {}
     item_by = {it["id"]: it for it in items}
     rows = []
     for vk, v in results.items():
@@ -28,6 +29,15 @@ def line_table(results: dict, items: list[dict], overrides: dict | None = None) 
                 flags = [f for f in flags if f["code"] not in settled] + [
                     {"code": verification, "severity": "info",
                      "message": f"₹{ov['value']:,.2f} {'confirmed' if not changed else 'set'} by {ov['by']} on {str(ov.get('at',''))[:10]} ({ov['reason']})"}]
+            dp = disputes.get(f"{vk}:{it['id']}")
+            if dp and not ov:
+                verification = "vendor_disputed"
+                flags = flags + [{"code": "vendor_disputed", "severity": "warning",
+                                  "message": f"Vendor says this reading is wrong ({str(dp.get('at', ''))[:10]}): \"{dp['explanation']}\". "
+                                             "Review their working and set the value under Inspect any number."}]
+            elif dp and ov:
+                flags = flags + [{"code": "dispute_resolved", "severity": "info",
+                                  "message": f"Vendor's explanation: \"{dp['explanation']}\" — resolved by {ov['by']}."}]
             excluded = bool(L.get("excluded_from_ranking")) and not ov
             fr = L.get("freight_inr")
             rows.append({

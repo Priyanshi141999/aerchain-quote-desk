@@ -18,6 +18,8 @@ SETTINGS = {
     "default_gst": 18.0,
     "deadline": datetime.fromisoformat("2026-10-01T18:00:00+05:30"),
     "evaluation_date": date(2026, 10, 6),  # the day the buyer is comparing quotes
+    # one clarification window for ALL vendors: confirmations and eligibility evidence must arrive before this
+    "clarification_deadline": datetime.fromisoformat("2026-10-10T18:00:00+05:30"),
     "required_payment_days": 60,
     "min_validity_days": 90,
     "outlier_low": 0.4,    # price below 40% of other vendors' median -> likely error
