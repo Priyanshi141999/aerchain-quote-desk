@@ -13,7 +13,7 @@ on:
         description: "Preferred model name (blank = automatic)"
         default: ""
       task:
-        description: "extraction or analyst"
+        description: "extraction, analyst or certs"
         default: "extraction"
 
 permissions:
@@ -54,6 +54,9 @@ jobs:
           mkdir -p eval/out
           python eval/ping_models.py 2>&1 | grep -v AFC | tee eval/out/ping_${LLM_PROVIDER}.txt || true
           set -o pipefail
+          if [ "${{ github.event.inputs.task }}" = "certs" ]; then
+            python eval/run_certs.py 2>&1 | tee eval/out/run_log_certs_${LLM_PROVIDER}.txt; exit 0
+          fi
           if [ "${{ github.event.inputs.task }}" = "analyst" ]; then
             python eval/run_analyst.py 2>&1 | tee eval/out/run_log_analyst_${LLM_PROVIDER}.txt; exit 0
           fi
