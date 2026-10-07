@@ -114,9 +114,14 @@ def normalize_line(L: dict, item: dict, terms: dict, prev: dict[int, dict]) -> d
     if unit == "kg":
         w = item["weight_kg"]
         v = v * w
-        trail.append(f"× {w:.3f} kg per {item['uom']} (weight from RFQ spec) → {v:,.2f}")
+        how = ""
+        if item.get("area_m2"):
+            gsm = w * 1000 / item["area_m2"]
+            how = f" = {item['area_m2']:.3f} m² of board × {gsm:.0f} g/m² ({item.get('board','')})"
+        trail.append(f"× {w:.3f} kg per {item['uom']}{how}, estimated from the RFQ spec → {v:,.2f}")
         flags.append(flag("converted_from_per_kg", "warning",
-                          f"Quoted per kg; converted with RFQ spec weight {w:.3f} kg. Actual box weight may differ."))
+                          f"Quoted per kg; converted with the estimated weight {w:.3f} kg per {item['uom']} "
+                          f"(board area × board grammage from the RFQ spec). The vendor's actual weight may differ — ask them to confirm."))
     elif unit in ("sqft", "sqm"):
         area = item["area_m2"] * (SQFT_PER_M2 if unit == "sqft" else 1)
         v = v * area

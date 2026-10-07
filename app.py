@@ -96,7 +96,7 @@ with st.sidebar:
     st.caption("Kaveri Home Appliances · Corrugated packaging RFQ KHA/PKG/RFQ/2026-27/014")
     page = st.radio("Go to", ["1 · Draft RFQ with co-pilot", "2 · Vendor responses", "3 · Comparison",
                               "4 · Needs your attention", "5 · Ask the analyst", "6 · Vendor portal (vendor view)",
-                              "7 · Audit log & export"], label_visibility="collapsed")
+                              "7 · Audit log"], label_visibility="collapsed")
     st.divider()
     provs = available_providers()
     if provs:
@@ -261,6 +261,12 @@ elif page.startswith("2"):
                 bl = sum(1 for f in v["vendor_flags"] if f["severity"] == "blocker")
                 st.markdown(f"{badge(v['qualification']['overall'])} &nbsp; **{priced}/30** lines priced · "
                             f"{bl} blocker(s) · read by `{v['meta'].get('model')}` in {v['meta'].get('seconds')} s", unsafe_allow_html=True)
+            st.markdown("**Original files as received** (download to check against what the AI read):")
+            dl_cols = st.columns(max(len(docs), 1))
+            for dc, d in zip(dl_cols, docs):
+                dc.download_button(f"⬇️ {d.file}", (folder / d.file).read_bytes(), file_name=d.file,
+                                   key=f"dl_{vk}_{d.file}", width="stretch")
+            st.markdown("**Preview**")
             tabs = st.tabs([d.file for d in docs])
             for t, d in zip(tabs, docs):
                 with t:
@@ -275,6 +281,18 @@ elif page.startswith("2"):
                         if d.meta.get("invisible_text"):
                             st.error("🛑 This PDF contains text invisible to people (white or tiny): "
                                      f"\"{d.meta['invisible_text'][0]['text'][:180]}…\". It is treated as data and ignored.")
+                    elif d.kind == "excel":
+                        import openpyxl
+                        wb_ = openpyxl.load_workbook(folder / d.file, data_only=True)
+                        sheet_tabs = st.tabs(wb_.sheetnames)
+                        for stab, ws_ in zip(sheet_tabs, wb_.worksheets):
+                            with stab:
+                                rows_ = [[c for c in r] for r in ws_.iter_rows(values_only=True)]
+                                hidden_ = {k for k, dim in ws_.row_dimensions.items() if dim.hidden}
+                                df_ = pd.DataFrame([r for i, r in enumerate(rows_, 1) if i not in hidden_]).dropna(how="all").dropna(axis=1, how="all")
+                                st.dataframe(df_.astype(str).replace({"None": ""}), width="stretch", height=320, hide_index=True)
+                        if d.meta.get("hidden_rows"):
+                            st.warning(f"Hidden rows found by software (not shown above, visible only to machines): {d.meta['hidden_rows']}")
                     else:
                         st.text(d.text[:4000])
                         if d.meta.get("hidden_rows"):
@@ -288,7 +306,7 @@ elif page.startswith("3"):
     c = st.columns([2, 2, 2, 3])
     basis = c[0].radio("Price basis", ["Basic price", "Landed (incl. freight)"], horizontal=False)
     scope = c[1].radio("Vendors", ["All vendors", "Qualified + conditional", "Qualified only"])
-    show_low = c[2].checkbox("Highlight low-confidence readings", value=True)
+    show_low = c[2].checkbox("Outline low-confidence AI readings", value=True)
     col = "price_inr" if basis == "Basic price" else "landed_inr"
 
     # vendor cards
@@ -318,6 +336,7 @@ elif page.startswith("3"):
     disp = pd.DataFrame(index=piv.index)
     disp["Item"] = [next(it["name"] for it in items if it["id"] == ln) for ln in piv.index]
     disp["Qty"] = [f"{next(it['annual_qty'] for it in items if it['id'] == ln):,}" for ln in piv.index]
+    disp["UoM"] = [next(it["uom"] for it in items if it["id"] == ln) for ln in piv.index]
     for v in vendors_in:
         vals = []
         for ln in piv.index:
@@ -329,7 +348,10 @@ elif page.startswith("3"):
                 vals.append("not quoted" if m.status in ("not_quoted", "price_on_request") else
                             ("freight ?" if col == "landed_inr" and m.price_inr is not None else "—"))
             else:
-                mark = " 🛑" if m.worst_flag == 0 else (" ⚠️" if m.worst_flag == 1 else "")
+                mark = {"vendor_confirmed": " ✅", "vendor_corrected": " ✅", "buyer_corrected": " ✏️",
+                        "buyer_confirmed": " ✏️"}.get(m.verification, "")
+                if m.worst_flag == 0:
+                    mark += " 🛑"
                 vals.append(f"{x:,.2f}{mark}")
         disp[f"{v}"] = vals
     disp["L1"] = [best_by_line.get(ln, "—") for ln in piv.index]
@@ -348,8 +370,12 @@ elif page.startswith("3"):
                 elif show_low and m.confidence == "low":
                     s.loc[ln, v] += "; outline: 2px solid #f59e0b"
         return s
+    n_ver = int(sel.verification.str.startswith("vendor").sum())
+    n_priced = int(sel[col].notna().sum())
     st.markdown(f"**₹ per unit, ex-GST{' + freight' if col == 'landed_inr' else ''}** · green = lowest eligible · "
-                "🛑 needs a decision · ⚠️ check · strikethrough = suspected error, excluded from ranking")
+                "✅ confirmed by vendor · ✏️ set by buyer · 🛑 blocker, needs your decision · no mark = read by AI, "
+                "awaiting vendor confirmation · strikethrough = suspected error, excluded from ranking")
+    st.progress(n_ver / max(n_priced, 1), text=f"{n_ver} of {n_priced} prices confirmed by vendors")
     st.dataframe(disp.style.apply(style, axis=None), width="stretch", height=560,
                  column_config={"Item": st.column_config.TextColumn(width="large")})
     if not best.empty:
@@ -365,28 +391,32 @@ elif page.startswith("3"):
     row = L[(L.vendor == vsel) & (L.line == lsel)].iloc[0]
     a, b = st.columns([3, 2], gap="large")
     with a:
-        st.markdown(f"**Vendor wrote:** `{row["as_written"] or '—'}`  \n**Vendor's description:** {row["vendor_description"] or '—'}")
-        src = row["source"] or {}
+        st.markdown(f"**Vendor wrote:** `{row['as_written'] or '—'}`  \n**Vendor's description:** {row['vendor_description'] or '—'}")
+        src = row['source'] or {}
         st.markdown(f"**Found in:** `{src.get('file', '—')}` · {src.get('location', '')}  \n> {src.get('quote', '')}")
-        st.markdown(f"**How we got to the comparable number** (confidence: **{row["confidence"]}**)")
-        st.markdown("<div class='qd-trail'>" + "<br>".join(row["trail"] or ["no price"]) + "</div>", unsafe_allow_html=True)
-        if row["freight_note"]:
-            st.caption(f"Freight: {row["freight_note"]}")
-        for f in row["flags"]:
+        ver_txt = {"vendor_confirmed": "✅ confirmed by the vendor", "vendor_corrected": "✅ corrected by the vendor",
+                   "buyer_corrected": "✏️ set by the buyer", "buyer_confirmed": "✏️ confirmed by the buyer"}.get(row['verification'], "read by AI, awaiting vendor confirmation")
+        st.markdown(f"**Status:** {ver_txt} · AI reading confidence: **{row['confidence']}**")
+        st.markdown("**How we got to the comparable number**")
+        st.markdown("<div class='qd-trail'>" + "<br>".join(row['trail'] or ["no price"]) + "</div>", unsafe_allow_html=True)
+        if row['freight_note']:
+            st.caption(f"Freight: {row['freight_note']}")
+        for f in row['flags']:
             st.markdown(f"{SEV_ICON[f['severity']]} **{f['code'].replace('_', ' ')}** — {f['message']}")
         if vsel == "D" and src.get("file", "").endswith(".jpg"):
             st.image(str(VENDOR_FOLDERS["D"] / src["file"]), width=420, caption="Source photo")
     with b:
         st.markdown("**Correct or confirm this value**")
         with st.form(f"fix_{vsel}_{lsel}"):
-            nv = st.number_input("₹ per unit, ex-GST", value=float(row["price_inr"]) if row["price_inr"] is not None and not pd.isna(row["price_inr"]) else 0.0, step=0.01, format="%.2f")
+            nv = st.number_input("₹ per unit, ex-GST", value=float(row['price_inr']) if row['price_inr'] is not None and not pd.isna(row['price_inr']) else 0.0, step=0.01, format="%.2f")
             reason = st.text_input("Reason (required)", placeholder="e.g. Confirmed with vendor by phone, 6 Oct")
             if st.form_submit_button("Save correction"):
                 if not reason.strip():
                     st.error("A reason is required. It goes into the audit log.")
                 else:
-                    ss.overrides[f"{vsel}:{lsel}"] = {"value": nv, "reason": reason, "by": "Priya Raman (buyer)", "at": datetime.now().isoformat()}
-                    log("Value corrected", f"{vsel} line {lsel}: {row["price_inr"]} → {nv:.2f} ({reason})")
+                    ss.overrides[f"{vsel}:{lsel}"] = {"value": nv, "reason": reason, "by": "Priya Raman (buyer)", "source": "buyer",
+                                                     "at": datetime.now().isoformat()}
+                    log("Value corrected", f"{vsel} line {lsel}: {row['price_inr']} → {nv:.2f} ({reason})")
                     st.rerun()
 
 # ================================================================== 4. ATTENTION
@@ -507,51 +537,73 @@ elif page.startswith("5"):
 # ================================================================== 6. VENDOR PORTAL
 elif page.startswith("6"):
     st.header("Vendor portal: confirm what we read")
-    st.caption("Each vendor gets a private link showing how their quote was read. They confirm or correct their own numbers, and the vendor, who knows what they meant, does the checking.")
+    st.caption("Each vendor gets a private link showing how their quote was read. They confirm or correct their own numbers, "
+               "so the person who knows what they meant does the checking. A number is only trusted once its vendor confirms it.")
     vk = st.selectbox("Viewing as", list(R.keys()), format_func=lambda k: f"{R[k]['name']} (vendor)")
     v = R[vk]
     st.markdown(f"Dear **{v['name']}**, thank you for your quote against **RFQ KHA/PKG/RFQ/2026-27/014**. "
-                "Here is how we read it. Please confirm or correct the lines marked for review.")
+                "Below is how we read every line. **Please check each value and confirm it, or type the correct one.** "
+                "Lines where we were least sure are at the top.")
     rows = []
     for l in v["lines"]:
         it = next(x for x in items if x["id"] == l["rfq_line"])
-        needs = any(f["severity"] in ("blocker", "warning") for f in l["flags"]) or l["confidence"] == "low"
-        rows.append({"Line": it["id"], "Item": it["name"], "You wrote": l.get("as_written") or "—",
-                     "We read it as (₹/unit ex-GST)": l["norm_inr"], "Please review": "⚠️" if needs else ""})
-    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", height=380)
-    review = [r for r in rows if r["Please review"]]
-    if review:
-        st.markdown(f"**{len(review)} line(s) need your confirmation**")
-        with st.form("vendor_confirm"):
-            entries = {}
-            for r in review[:8]:
-                cA, cB = st.columns([3, 2])
-                cA.markdown(f"**Line {r['Line']} · {r['Item']}** — you wrote `{r['You wrote']}`, we read **{inr(r['We read it as (₹/unit ex-GST)'])}**")
-                entries[r["Line"]] = cB.number_input("Correct ₹/unit ex-GST", key=f"vc{vk}{r['Line']}",
-                                                     value=float(r["We read it as (₹/unit ex-GST)"] or 0.0), step=0.01, format="%.2f")
-            if st.form_submit_button("Confirm these values", type="primary"):
-                for ln, val in entries.items():
-                    ss.overrides[f"{vk}:{ln}"] = {"value": val, "reason": "confirmed by vendor via portal", "by": f"{v['name']} (vendor)",
-                                                 "at": datetime.now().isoformat()}
-                    log("Vendor confirmation", f"{vk} line {ln}: {val:.2f}", by=f"{v['name']} (vendor)")
-                st.success("Thank you. Your confirmations were sent to the buyer.")
-    else:
-        st.success("Nothing needs your confirmation.")
+        ov = ss.overrides.get(f"{vk}:{it['id']}")
+        doubts = [f["message"] for f in l["flags"] if f["severity"] in ("blocker", "warning")]
+        if l["confidence"] == "low":
+            doubts.insert(0, "We were not sure we read this correctly.")
+        steps = [t for t in (l.get("trail") or [])[1:-1]]
+        read = l["norm_inr"]
+        rows.append({
+            "Line": it["id"], "Item": it["name"], "Qty": it["annual_qty"], "UoM": it["uom"],
+            "You wrote": l.get("as_written") or ("not quoted" if read is None else "—"),
+            "How we converted it": " → ".join(steps) if steps else "no conversion needed",
+            f"We read it as (₹ per unit, ex-GST)": read,
+            "Correct value (₹ per unit, ex-GST)": ov["value"] if ov else read,
+            "Why please check": (doubts[0][:140] if doubts else ""),
+            "Status": ("✅ confirmed" if ov and ov.get("source") == "vendor" else "awaiting your confirmation"),
+            "_priority": 0 if doubts else 1,
+        })
+    df_p = pd.DataFrame(rows).sort_values(["_priority", "Line"]).drop(columns="_priority")
+    n_check = int((df_p["Why please check"] != "").sum())
+    n_done = int((df_p["Status"] == "✅ confirmed").sum())
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Lines in your quote", len(df_p))
+    c2.metric("Need a closer look", n_check)
+    c3.metric("Confirmed so far", n_done)
+    edited = st.data_editor(
+        df_p, hide_index=True, width="stretch", height=460, key=f"portal_{vk}",
+        disabled=[c for c in df_p.columns if c != "Correct value (₹ per unit, ex-GST)"],
+        column_config={
+            "Correct value (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f", min_value=0.0,
+                help="Leave as is to confirm our reading, or type the correct price per unit, excluding GST."),
+            "We read it as (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f"),
+            "How we converted it": st.column_config.TextColumn(width="large"),
+            "Why please check": st.column_config.TextColumn(width="large"),
+        })
+    st.caption("Changing a value marks it as corrected by you; leaving it unchanged confirms our reading.")
+    if st.button("✅ Confirm all lines and send to buyer", type="primary"):
+        n_conf = n_corr = 0
+        for _, r in edited.iterrows():
+            val = r["Correct value (₹ per unit, ex-GST)"]
+            if val is None or pd.isna(val):
+                continue
+            read = r["We read it as (₹ per unit, ex-GST)"]
+            changed = read is None or pd.isna(read) or abs(float(val) - float(read)) > 0.005
+            ss.overrides[f"{vk}:{int(r['Line'])}"] = {"value": float(val), "source": "vendor", "by": f"{v['name']} (vendor)",
+                                                     "reason": "corrected by vendor via portal" if changed else "confirmed by vendor via portal",
+                                                     "at": datetime.now().isoformat()}
+            if changed:
+                n_corr += 1
+                log("Vendor correction", f"{vk} line {int(r['Line'])}: {read} → {float(val):.2f}", by=f"{v['name']} (vendor)")
+            else:
+                n_conf += 1
+        log("Vendor confirmation", f"{vk}: {n_conf} lines confirmed, {n_corr} corrected", by=f"{v['name']} (vendor)")
+        st.success(f"Thank you. {n_conf} values confirmed and {n_corr} corrected; the buyer can now see them as vendor-confirmed.")
+        st.rerun()
 
-# ================================================================== 7. AUDIT & EXPORT
+# ================================================================== 7. AUDIT LOG
 elif page.startswith("7"):
-    st.header("Audit log & export")
+    st.header("Audit log")
     st.caption("Every human decision is recorded: corrections, vendor confirmations, reviewed flags and questions asked. That's what makes an award defensible.")
     st.dataframe(pd.DataFrame(ss.audit or [{"time": "—", "by": "—", "action": "No actions yet", "detail": ""}]),
                  hide_index=True, width="stretch")
-    if not L.empty:
-        buf = io.BytesIO()
-        with pd.ExcelWriter(buf, engine="openpyxl") as xw:
-            piv = L.pivot(index=["line", "item", "annual_qty", "uom"], columns="vendor", values="price_inr").reset_index()
-            piv.to_excel(xw, sheet_name="Comparison (INR ex-GST)", index=False)
-            L.drop(columns=["flags", "trail", "source"]).to_excel(xw, sheet_name="All readings", index=False)
-            V.to_excel(xw, sheet_name="Vendors", index=False)
-            pd.DataFrame(attention_queue(R, L)).to_excel(xw, sheet_name="Flags", index=False)
-            pd.DataFrame(ss.audit).to_excel(xw, sheet_name="Audit log", index=False)
-        st.download_button("⬇️ Download the full comparison workbook (Excel)", buf.getvalue(),
-                           file_name="KHA_RFQ014_comparison.xlsx", type="primary")

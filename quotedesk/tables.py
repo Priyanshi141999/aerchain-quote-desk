@@ -16,11 +16,18 @@ def line_table(results: dict, items: list[dict], overrides: dict | None = None) 
             it = item_by[L["rfq_line"]]
             price, conf, flags = L["norm_inr"], L["confidence"], list(L["flags"])
             ov = overrides.get(f"{vk}:{it['id']}")
+            verification = "unverified"   # read by AI, not yet confirmed by anyone
             if ov:
+                src = ov.get("source", "buyer")
+                changed = L["norm_inr"] is None or abs((L["norm_inr"] or 0) - ov["value"]) > 0.005
+                verification = f"{src}_{'corrected' if changed else 'confirmed'}"
                 price, conf = ov["value"], "confirmed"
-                flags = [f for f in flags if f["code"] != "price_outlier"] + [
-                    {"code": "manually_corrected", "severity": "info",
-                     "message": f"Set to ₹{ov['value']:,.2f} by {ov['by']} ({ov['reason']})"}]
+                # a value confirmed at source settles doubts about the READING; spec/commercial blockers stay
+                settled = {"price_outlier", "low_confidence_reading", "converted_from_per_kg", "converted_from_area",
+                           "price_range", "unit_unclear", "inferred_from_previous_contract"}
+                flags = [f for f in flags if f["code"] not in settled] + [
+                    {"code": verification, "severity": "info",
+                     "message": f"₹{ov['value']:,.2f} {'confirmed' if not changed else 'set'} by {ov['by']} on {str(ov.get('at',''))[:10]} ({ov['reason']})"}]
             excluded = bool(L.get("excluded_from_ranking")) and not ov
             fr = L.get("freight_inr")
             rows.append({
@@ -32,6 +39,7 @@ def line_table(results: dict, items: list[dict], overrides: dict | None = None) 
                 "landed_inr": round(price + fr, 2) if (price is not None and fr is not None) else None,
                 "annual_value_inr": round(price * it["annual_qty"], 0) if price is not None else None,
                 "confidence": conf,
+                "verification": verification,
                 "excluded_from_ranking": excluded,
                 "flag_codes": ",".join(sorted({f["code"] for f in flags})),
                 "worst_flag": min((SEV_ORDER[f["severity"]] for f in flags), default=3),
