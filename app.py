@@ -409,16 +409,19 @@ elif page.startswith("4"):
 elif page.startswith("5"):
     st.header("Ask the analyst")
     st.caption("Plain-English questions over the whole comparison. The AI writes the calculation, code runs it on the extracted data, and the AI explains only what was computed.")
-    examples = ["What if we split it, cheapest per line, but only among vendors who cleared the quality questionnaire?",
-                "Who is cheapest overall on landed cost, and where is freight unknown?",
-                "If we gave everything to Deccan to get their 5% discount, how would that compare with the best split?",
-                "Which lines have only one or no eligible quote?",
-                "Chart the price spread per line across vendors for the 5-ply boxes.",
-                "Export a line-wise award recommendation to Excel."]
+    examples = {
+        "Split it: cheapest per line, qualified vendors only": "What if we split it, cheapest per line, but only among vendors who cleared the quality questionnaire?",
+        "Who's cheapest on landed cost? Where is freight unknown?": "Who is cheapest overall on landed cost, and where is freight unknown?",
+        "Everything to Deccan for 5% off vs the best split": "If we gave everything to Deccan to get their 5% discount, how would that compare with the best split?",
+        "Which lines have one or no eligible quote?": "Which lines have only one or no eligible quote among qualified and conditional vendors?",
+        "Chart the price spread for 5-ply boxes": "Chart the price spread per line across vendors for the 5-ply boxes.",
+        "Export a line-wise award recommendation": "Export a line-wise award recommendation to Excel.",
+    }
+    st.caption("Try one of these, or type your own below:")
     ec = st.columns(3)
-    for i, e in enumerate(examples):
-        if ec[i % 3].button(e, key=f"ex{i}", width="stretch"):
-            ss.pending_q = e
+    for i, (label, full) in enumerate(examples.items()):
+        if ec[i % 3].button(label, key=f"ex{i}", width="stretch", help=full):
+            ss.pending_q = full
             st.rerun()
     for i, h in enumerate(ss.chat):
         with st.chat_message("user"):
@@ -466,10 +469,18 @@ elif page.startswith("5"):
         with st.status("Working on it…", expanded=True) as status:
             st.write("1. AI plans the calculation → 2. code runs it on the extracted quotes → 3. AI writes up only what was computed.")
             try:
-                out = analyst.ask(q, L, V, items, ss.chat, on_status=lambda m: status.update(label=f"Working on it… {m}"))
+                facts = []
+                for vk_, v_ in R.items():
+                    qq = v_["qualification"]["questions"]
+                    must = "; ".join(f"{qid} {qq[qid]['status']}: {qq[qid]['reason'][:110]}" for qid in ("Q1", "Q2", "Q8") if qid in qq)
+                    blk = "; ".join(f["message"][:120] for f in v_["vendor_flags"] if f["severity"] == "blocker")
+                    facts.append(f"{vk_} {v_['name']}: {v_['qualification']['overall']} | must-pass: {must} | blockers: {blk or 'none'}")
+                out = analyst.ask(q, L, V, items, ss.chat, on_status=lambda m: status.update(label=f"Working on it… {m}"),
+                                  vendor_facts="\n".join(facts))
                 res = out["result"]
                 if isinstance(res, dict):
-                    res = next((v for v in res.values() if isinstance(v, (pd.DataFrame, pd.Series))), None)
+                    frames = [v for v in res.values() if isinstance(v, (pd.DataFrame, pd.Series))]
+                    res = max(frames, key=len) if frames else None
                 tbl = res if isinstance(res, pd.DataFrame) else (res.reset_index() if isinstance(res, pd.Series) else None)
                 ss.chat.append({"q": q, "answer": out["answer"].get("answer_markdown", ""), "caveats": out["answer"].get("caveats", []),
                                 "followups": out["answer"].get("followups", []), "plan": out["plan"], "fig": out["fig"],

@@ -58,6 +58,8 @@ RULES
   when a chart would help, and MAY assign `export` (a DataFrame) if the user asks for a download/export.
 - When the answer depends on the definition of "qualified", ALSO compute the answer including "conditional"
   vendors and put both in `result`, so the buyer sees what the conditional vendor would change.
+- For any award / split / scenario question, `result` MUST include the line-by-line table (line, item, winner,
+  unit_price, annual_value, n_eligible) as well as the summary totals, so the buyer can see who wins what.
 - `result` must contain EVERY number the answer will need, including totals, differences and counts, as explicit
   values. The writer of the final answer cannot do arithmetic. Best shape: a dict like
   {"summary": {"total_inr": ..., "lines_without_eligible_quote": [...], ...}, "table": <DataFrame>}.
@@ -70,9 +72,11 @@ ANSWER_SYSTEM = """You are a senior procurement analyst writing to the buyer (an
 using ONLY the computed results provided. Every number you mention must appear VERBATIM in the results (you may
 reformat it as lakh/crore). NEVER add, subtract or total numbers yourself; if a figure you want is not in the
 results, leave it out and say it was not computed. Be concise and
-decision-oriented: lead with the answer, then the 2-4 facts that matter, then caveats that could change the
-decision (unqualified vendors, suspected errors, missing lines, unknown freight, conditional discounts, late or
-expired offers). Use INR with Indian digit grouping (₹1,23,45,678) or lakh/crore where natural.
+decision-oriented: lead with the answer (who wins what, and the total), then the 2-4 facts that matter (e.g. how many
+lines each vendor wins, which lines have no eligible quote, WHY vendors are excluded, using VENDOR FACTS), then
+caveats that could change the decision (unqualified vendors, suspected errors, missing lines, unknown freight, conditional discounts, late or
+expired offers). Write large amounts in crore or lakh with two decimals (₹4.55 Cr, ₹24.34 lakh), never with ".0" endings.
+Refer to vendors by name (e.g. "Siam Pacific (A)").
 If the results are empty or show an error, say plainly what could not be answered and why.
 
 Return JSON: {"answer_markdown": str, "caveats": [str], "followups": [str]}  (2-3 short follow-up questions)
@@ -230,7 +234,8 @@ def verify_numbers(answer: str, result, question: str = "") -> dict:
     return {"checked": checked, "unverified": unverified}
 
 
-def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict], history: list[dict] | None = None, on_status=None) -> dict:
+def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict], history: list[dict] | None = None,
+        on_status=None, vendor_facts: str = "") -> dict:
     L, V, I = _safe_frames(lines, vendors, items)
     hist = ""
     for h in (history or [])[-4:]:
@@ -247,7 +252,9 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
     computed = out.get("error") and f"ERROR: {out['error']}" or _render(out["result"])
     ans = complete_json(ANSWER_SYSTEM, [Part(text=(
         f"QUESTION: {question}\nINTERPRETATION: {plan.get('interpretation')}\n"
-        f"ASSUMPTIONS: {plan.get('assumptions')}\nCOMPUTED RESULTS:\n{computed}"))], max_tokens=3000, fast=True, on_status=on_status).data
-    check = verify_numbers(ans.get("answer_markdown", ""), out.get("result"), question)
+        f"ASSUMPTIONS: {plan.get('assumptions')}\nCOMPUTED RESULTS:\n{computed}\n\n"
+        f"VENDOR FACTS (from the evaluation, use to explain WHY, e.g. why a vendor is or isn't eligible):\n{vendor_facts or '(none)'}"
+        ))], max_tokens=3000, fast=True, on_status=on_status).data
+    check = verify_numbers(ans.get("answer_markdown", ""), {"r": out.get("result"), "facts": vendor_facts}, question)
     return {"question": question, "plan": plan, "result": out.get("result"), "fig": out.get("fig"),
             "export": out.get("export"), "error": out.get("error"), "answer": ans, "number_check": check}
