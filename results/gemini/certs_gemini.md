@@ -1,0 +1,13 @@
+# Certificate check — gemini
+
+**7/7 behaved as expected**
+
+| File | Uploaded as | Read by | Holder read | Valid until | Expected | Result | Reason |
+|---|---|---|---|---|---|---|---|
+| Deccan_ISO9001_renewed_2026.pdf | Deccan Packaging Industries | gemini-flash-lite-latest (40s) | Deccan Packaging Industries | 2029-03-31 | accept | ✅ accepted | Valid ISO 9001 certificate QMS/IN/22907-R1 for Deccan Packaging Industries, until 31 Mar 2029. |
+| SriMurugan_ISO9001_reissued.pdf | Sri Murugan Corrugated Boxes | gemini-flash-lite-latest (2s) | Sri Murugan Corrugated Boxes | 2028-08-09 | accept | ✅ accepted | Valid ISO 9001 certificate QMS/IN/39150-A for Sri Murugan Corrugated Boxes, until 09 Aug 2028. |
+| Annapurna_ISO9001.pdf | Annapurna Packers | gemini-flash-lite-latest (4s) | Annapurna Packers | 2027-01-11 | accept | ✅ accepted | Valid ISO 9001 certificate QMS/IN/31044 for Annapurna Packers, until 11 Jan 2027. |
+| Vijay_audit_schedule_letter.pdf | Vijay Box Works | gemini-flash-lite-latest (3s) | None | None | reject | ✅ rejected | This document is not a certificate. The document is a letter confirming an audit schedule, not a quality-management certificate. |
+| Deccan_ISO_Certificate.pdf | Deccan Packaging Industries | gemini-flash-lite-latest (1s) | Deccan Packaging Industries | 2026-03-31 | reject | ✅ rejected | Certificate expired on 31 Mar 2026. |
+| SriMurugan_ISO9001_reissued.pdf | Deccan Packaging Industries | gemini-flash-lite-latest (2s) | Sri Murugan Corrugated Boxes | 2028-08-09 | reject | ✅ rejected | Certificate is issued to 'Sri Murugan Corrugated Boxes', not 'Deccan Packaging Industries' (name match 29%). |
+| ISO_certificate.pdf | Sri Murugan Corrugated Boxes | gemini-flash-lite-latest (4s) | Murugan Packaging Industries | 2028-08-09 | reject | ✅ rejected | Certificate is issued to 'Murugan Packaging Industries', not 'Sri Murugan Corrugated Boxes' (name match 50%). |
