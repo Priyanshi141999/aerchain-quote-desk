@@ -13,7 +13,7 @@ from quotedesk.tables import line_table, vendor_table  # noqa: E402
 
 QUESTIONS = [
     "What if we split it, cheapest per line, but only among vendors who cleared the quality questionnaire?",
-    "Who is cheapest overall on landed cost, and where is freight unknown?",
+    "Who is cheapest overall on a like-for-like basis, and where is freight unknown?",
     "If we gave everything to Deccan to get their 5% discount, how would that compare with the best split?",
     "Which lines have only one or no eligible quote among qualified and conditional vendors?",
     "Chart the price spread per line across vendors for the 5-ply boxes.",
@@ -37,7 +37,7 @@ hist = []
 for q in QUESTIONS:
     t0 = time.time()
     try:
-        a = analyst.ask(q, L, V, items, hist, vendor_facts=FACTS)
+        a = analyst.ask(q, L, V, items, hist, vendor_facts=FACTS, last_year=pd.read_csv(ROOT / "data/buyer/last_year_contract_annapurna_FY25-26.csv"))
         res = a["result"]
         frames = [res] if isinstance(res, pd.DataFrame) else [v for v in (res.values() if isinstance(res, dict) else []) if isinstance(v, pd.DataFrame)]
         tbl = "\n\n".join(f.head(12).to_markdown(index=False) for f in frames) or str(res)[:2500]

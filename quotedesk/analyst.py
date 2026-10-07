@@ -31,6 +31,9 @@ DATA AVAILABLE TO YOUR CODE (already loaded as pandas DataFrames):
   ("yes"|"no"|"partial"|"pending"|"not_answered"), lines_priced, payment_days, lead_time_days, validity_days,
   freight_basis, discounts (text), one_time_charges (text), late_submission (bool), offer_expired (bool),
   blockers, warnings.
+- `last_year`: last year's rate contract with the incumbent (Annapurna), one row per line it covered. Columns:
+  line_no, item, board_grade, bursting_factor_bf, annual_qty, uom, price_inr_ex_gst. Lines 20 and 24 are new this
+  year (not in it); line 5's spec changed (20 BF last year, 22 BF now). Use it for year-on-year questions.
 - `items`: the 30 RFQ lines (id, name, form, board, dims, bf, print_colours, annual_qty, uom, weight_kg).
 - Libraries: pd, np, px (plotly.express). Do NOT import anything. Do not read or write files.
 
@@ -44,7 +47,18 @@ VETTED HELPERS (use them for award scenarios instead of writing your own arithme
 - same_lines_comparison(split_df, single_vendor_result, lines, basis="price_inr") -> dict with EXACTLY these keys:
   lines_compared, lines_left_out, split_total, vendor_total, vendor_minus_split (negative = vendor cheaper).
   It compares both scenarios over exactly the same lines.
-- Use only the keys listed above; do not invent others. ALWAYS use this when comparing a split with a
+- vendor_totals(lines, basis="price_inr", vendors_allowed=None) -> DataFrame (vendor, vendor_name, qualification,
+  lines_priced, lines_with_<basis>, lines_compared, total_on_common_lines), sorted cheapest first. Totals cover
+  ONLY lines every listed vendor priced on that basis, so they are comparable. Use it for "who is cheapest overall".
+- Use only the keys listed above; do not invent others.
+
+FAIRNESS RULES (a buyer will stake crores on these answers)
+- Never rank vendors by totals that cover different sets of lines. Use vendor_totals or same_lines_comparison.
+- Unknown freight is UNKNOWN, never zero. For landed-cost questions, say which vendors' freight is unknown and
+  compare landed cost only where it is known; otherwise compare basic price and state that freight is missing.
+- If the data needed to answer does not exist (e.g. delivery history, past performance, ratings), set
+  `result` to say so explicitly and, separately, offer the closest available proxy (e.g. quoted lead time),
+  clearly labelled as a proxy. ALWAYS use this when comparing a split with a
   single-vendor award, so the two totals cover the same goods.
 
 RULES
@@ -81,6 +95,8 @@ caveats that could change the decision (unqualified vendors, suspected errors, m
 expired offers). Write large amounts in crore or lakh with two decimals (₹4.55 Cr, ₹24.34 lakh), never with ".0" endings.
 Refer to vendors by name (e.g. "Siam Pacific (A)").
 If the results are empty or show an error, say plainly what could not be answered and why.
+If the results say the requested data does not exist, START by saying so plainly, then present any proxy as a proxy.
+Do not reuse numbers from earlier answers in the conversation; use only this question's computed results.
 
 Return JSON: {"answer_markdown": str, "caveats": [str], "followups": [str]}  (2-3 short follow-up questions)
 """
@@ -127,6 +143,31 @@ def single_vendor(lines: pd.DataFrame, vendor: str, basis: str = "price_inr", di
             "note": "Totals cover only reliable lines; compare with other scenarios on the SAME lines."}
 
 
+def vendor_totals(lines: pd.DataFrame, basis: str = "price_inr", vendors_allowed=None, include_suspect: bool = False) -> pd.DataFrame:
+    """Fair vendor-vs-vendor totals: every vendor is totalled over the SAME lines (lines all of them priced on `basis`).
+    Also reports each vendor's full coverage so gaps are visible, and how many of its lines lack the basis value."""
+    df = lines.copy()
+    if vendors_allowed is not None:
+        df = df[df.vendor.isin(list(vendors_allowed))]
+    ok = df if include_suspect else df[~df.excluded_from_ranking]
+    vend = sorted(df.vendor.unique())
+    have = ok[ok[basis].notna()].groupby("line").vendor.nunique()
+    common = sorted(have[have == len(vend)].index)
+    rows = []
+    for v in vend:
+        d = df[df.vendor == v]
+        dv = ok[(ok.vendor == v) & ok.line.isin(common)]
+        rows.append({"vendor": v, "vendor_name": d.vendor_name.iloc[0], "qualification": d.qualification.iloc[0],
+                     "lines_priced": int(d.price_inr.notna().sum()),
+                     f"lines_with_{basis}": int(d[basis].notna().sum()),
+                     "lines_compared": len(common),
+                     f"total_on_common_lines": round(float((dv[basis] * dv.annual_qty).sum()), 0)})
+    out = pd.DataFrame(rows).sort_values("total_on_common_lines")
+    out.attrs["common_lines"] = common
+    out.attrs["lines_left_out"] = sorted(set(lines.line.unique()) - set(common))
+    return out
+
+
 def same_lines_comparison(split_df: pd.DataFrame, vendor_result: dict, lines: pd.DataFrame, basis: str = "price_inr") -> dict:
     """Compare a split with a single-vendor award over exactly the lines both can cover."""
     v = lines[(lines.vendor == vendor_result["vendor"]) & lines[basis].notna() & (~lines.excluded_from_ranking)]
@@ -152,12 +193,13 @@ def _safe_frames(lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict]):
     return L, vendors.copy(), I
 
 
-def run_code(code: str, L, V, I) -> dict:
+def run_code(code: str, L, V, I, LY=None) -> dict:
     if BANNED.search(code):
         return {"error": "Code used a disallowed operation (imports, files or system access)."}
     import plotly.express as px
     env = {"pd": pd, "np": np, "px": px, "lines": L.copy(), "vendors": V.copy(), "items": I.copy(),
-           "cheapest_split": cheapest_split, "single_vendor": single_vendor, "same_lines_comparison": same_lines_comparison}
+           "cheapest_split": cheapest_split, "single_vendor": single_vendor, "same_lines_comparison": same_lines_comparison,
+           "vendor_totals": vendor_totals, "last_year": LY.copy() if LY is not None else pd.DataFrame()}
     safe_builtins = {k: __builtins__[k] if isinstance(__builtins__, dict) else getattr(__builtins__, k)
                      for k in ("len", "range", "min", "max", "sum", "sorted", "round", "abs", "list", "dict", "set",
                                "tuple", "str", "int", "float", "bool", "enumerate", "zip", "any", "all", "isinstance",
@@ -257,6 +299,8 @@ def verify_numbers(answer: str, result, question: str = "") -> dict:
     for df in _frames_in(result):
         counts.add(float(len(df)))
         for c in df.columns:
+            if pd.api.types.is_integer_dtype(df[c]) and any(k in str(c).lower() for k in ("count", "lines", "n_", "num")):
+                counts |= {float(v) for v in df[c].dropna().values}
             if not pd.api.types.is_numeric_dtype(df[c]) and df[c].nunique() <= 12:
                 counts |= {float(v) for v in df[c].fillna("∅").value_counts().values}
         if "winner" in df.columns:
@@ -299,8 +343,14 @@ def verify_numbers(answer: str, result, question: str = "") -> dict:
 
 
 def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict], history: list[dict] | None = None,
-        on_status=None, vendor_facts: str = "") -> dict:
+        on_status=None, vendor_facts: str = "", last_year: pd.DataFrame | None = None) -> dict:
     L, V, I = _safe_frames(lines, vendors, items)
+    LY = None
+    if last_year is not None and not last_year.empty:
+        LY = last_year.rename(columns={"line_no": "line_no"})[[c for c in ("line_no", "item", "board_grade", "bursting_factor_bf",
+                                                                             "annual_qty", "uom", "price_inr_ex_gst") if c in last_year.columns]].copy()
+        LY["price_inr_ex_gst"] = pd.to_numeric(LY["price_inr_ex_gst"], errors="coerce")
+        LY["line_no"] = pd.to_numeric(LY["line_no"], errors="coerce")
     hist = ""
     for h in (history or [])[-4:]:
         hist += f"Q: {h['q']}\nA (summary): {h.get('answer','')[:400]}\n"
@@ -308,7 +358,7 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
                f"`vendors` (all rows):\n{V.to_csv(index=False)}\n"
                f"Previous conversation:\n{hist or '(none)'}\n\nQUESTION: {question}")
     plan = complete_json(PLAN_SYSTEM, [Part(text=context)], max_tokens=6000, fast=True, on_status=on_status).data
-    out = run_code(plan.get("code", ""), L, V, I)
+    out = run_code(plan.get("code", ""), L, V, I, LY)
     for _ in range(2):  # self-correction: show the model its real error and let it fix the code
         if "error" not in out:
             break
@@ -316,7 +366,7 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
             on_status("calculation hit an error, fixing it…")
         fix_ctx = context + f"\n\nYour previous code:\n{plan.get('code')}\n\nIt failed with:\n{out['error']}\nFix it."
         plan = complete_json(PLAN_SYSTEM, [Part(text=fix_ctx)], max_tokens=6000, fast=True, on_status=on_status).data
-        out = run_code(plan.get("code", ""), L, V, I)
+        out = run_code(plan.get("code", ""), L, V, I, LY)
     computed = out.get("error") and f"ERROR: {out['error']}" or _render(out["result"])
     ans = complete_json(ANSWER_SYSTEM, [Part(text=(
         f"QUESTION: {question}\nINTERPRETATION: {plan.get('interpretation')}\n"

@@ -141,6 +141,13 @@ def inr(x, dec=2):
     return f"₹{x:,.2f}"
 
 
+def short_name(n: str) -> str:
+    """Drop legal suffixes for compact display (full legal names stay everywhere else)."""
+    import re as _re
+    n = _re.sub(r"\((india)\)|\b(pvt|private|ltd|limited|llp|industries|corrugated boxes)\b\.?", "", n, flags=_re.I)
+    return _re.sub(r"\s+", " ", n).strip(" ,.-")
+
+
 def crore(x):
     return f"₹{x / 1e7:.2f} Cr"
 
@@ -291,7 +298,7 @@ elif page.startswith("3"):
         mp = " ".join(f"{qid}:{'✅' if q[qid]['status'] == 'yes' else '❌' if q[qid]['status'] in ('no', 'not_answered') else '🟡'}"
                       for qid in ("Q1", "Q2", "Q8"))
         tot = L[(L.vendor == vr["vendor"])]["annual_value_inr"].sum()
-        cc.markdown(f"""<div class="qd-card"><b>{vr['vendor']} · {vr['vendor_name']}</b><br>{badge(vr['qualification'])}
+        cc.markdown(f"""<div class="qd-card"><b>{vr['vendor']} · {short_name(vr['vendor_name'])}</b><br>{badge(vr['qualification'])}
         <div class="qd-muted" style="margin-top:6px">{mp}<br>{vr['lines_priced']}/30 lines · {crore(tot)} quoted<br>
         {SEV_ICON['blocker']} {vr['blockers']} &nbsp; {SEV_ICON['warning']} {vr['warnings']}</div></div>""", unsafe_allow_html=True)
     st.write("")
@@ -411,10 +418,11 @@ elif page.startswith("5"):
     st.caption("Plain-English questions over the whole comparison. The AI writes the calculation, code runs it on the extracted data, and the AI explains only what was computed.")
     examples = {
         "Split it: cheapest per line, qualified vendors only": "What if we split it, cheapest per line, but only among vendors who cleared the quality questionnaire?",
-        "Who's cheapest on landed cost? Where is freight unknown?": "Who is cheapest overall on landed cost, and where is freight unknown?",
+        "Who's cheapest overall, like for like?": "Who is cheapest overall on a like-for-like basis, and where is freight unknown?",
         "Everything to Deccan for 5% off vs the best split": "If we gave everything to Deccan to get their 5% discount, how would that compare with the best split?",
         "Which lines have one or no eligible quote?": "Which lines have only one or no eligible quote among qualified and conditional vendors?",
         "Chart the price spread for 5-ply boxes": "Chart the price spread per line across vendors for the 5-ply boxes.",
+        "How do this year's prices compare with last year?": "How do this year's prices compare with last year's contract for the same items?",
         "Export a line-wise award recommendation": "Export a line-wise award recommendation to Excel.",
     }
     st.caption("Try one of these, or type your own below:")
@@ -476,7 +484,8 @@ elif page.startswith("5"):
                     blk = "; ".join(f["message"][:120] for f in v_["vendor_flags"] if f["severity"] == "blocker")
                     facts.append(f"{vk_} {v_['name']}: {v_['qualification']['overall']} | must-pass: {must} | blockers: {blk or 'none'}")
                 out = analyst.ask(q, L, V, items, ss.chat, on_status=lambda m: status.update(label=f"Working on it… {m}"),
-                                  vendor_facts="\n".join(facts))
+                                  vendor_facts="\n".join(facts),
+                                  last_year=pd.read_csv(DATA / "buyer/last_year_contract_annapurna_FY25-26.csv"))
                 res = out["result"]
                 if isinstance(res, dict):
                     frames = [v for v in res.values() if isinstance(v, (pd.DataFrame, pd.Series))]
