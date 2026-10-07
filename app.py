@@ -4,7 +4,7 @@ from __future__ import annotations
 import io
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -32,15 +32,17 @@ import sys as _sys  # noqa: E402
 _first = not hasattr(_sys, "_qd_mtimes")
 _seen = getattr(_sys, "_qd_mtimes", {})
 _changed = _first  # first run of this app version in a long-lived server: refresh everything once
+import quotedesk.updates  # noqa: E402
 for _m in (quotedesk.llm, quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extract,
-           quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot):
+           quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot, quotedesk.updates):
     _mt = os.path.getmtime(_m.__file__)
     if _changed or (_m.__name__ in _seen and _seen[_m.__name__] != _mt):
         importlib.reload(_m)
         _changed = True
     _seen[_m.__name__] = _mt
 _sys._qd_mtimes = _seen
-from quotedesk import analyst, copilot, llm  # noqa: E402
+from quotedesk import analyst, copilot, llm, updates  # noqa: E402
+from quotedesk.normalize import SETTINGS  # noqa: E402
 from quotedesk.ingest import read_vendor_folder  # noqa: E402
 from quotedesk.pipeline import load_rfq, run_all  # noqa: E402
 from quotedesk.tables import attention_queue, line_table, vendor_table  # noqa: E402
@@ -69,6 +71,7 @@ ss.setdefault("chat", [])            # analyst conversation
 ss.setdefault("copilot_msgs", [])
 ss.setdefault("draft", None)
 ss.setdefault("published", False)
+ss.setdefault("vendor_updates", {})  # vendor key -> evidence submitted in the portal after the quote
 
 items, questions, rfq_terms, prev = load_rfq(DATA)
 
@@ -130,9 +133,18 @@ if "results" not in ss:
         except Exception as e:
             ss.results = {}
             st.error(f"Could not load vendor readings: {e}")
-R = ss.get("results", {})
+R = updates.apply(ss.get("results", {}), ss.vendor_updates, questions) if ss.get("results") else {}
 L = line_table(R, items, ss.overrides) if R else pd.DataFrame()
 V = vendor_table(R) if R else pd.DataFrame()
+
+
+def updates_banner():
+    changed = [(k, v["update_summary"]) for k, v in R.items() if v.get("update_summary")]
+    if changed:
+        txt = " · ".join(f"**{short_name(R[k]['name'])}** {u['before'].replace('_', ' ')} → **{u['after'].replace('_', ' ')}**"
+                         if u["before"] != u["after"] else f"**{short_name(R[k]['name'])}** updated ({'; '.join(u['notes'])})"
+                         for k, u in changed)
+        st.info(f"🔄 Vendor updates received via the portal: {txt}. Rankings and flags below reflect them.")
 
 
 def badge(qual):
@@ -322,6 +334,7 @@ elif page.startswith("3"):
     st.header("Side-by-side comparison")
     if L.empty:
         st.stop()
+    updates_banner()
     c = st.columns([2, 2, 2, 3])
     basis = c[0].radio("Price basis", ["Basic price", "Landed (incl. freight)"], horizontal=False)
     scope = c[1].radio("Vendors", ["All vendors", "Qualified + conditional", "Qualified only"])
@@ -441,6 +454,7 @@ elif page.startswith("3"):
 # ================================================================== 4. ATTENTION
 elif page.startswith("4"):
     st.header("Needs your attention")
+    updates_banner()
     st.caption("Everything the system was unsure about, or that could change the award, worst first. Nothing here was silently decided for you.")
     Q = attention_queue(R, L)
     done = sum(1 for i, x in enumerate(Q) if f"{x['vendor']}|{x['line']}|{x['code']}|{i}" in ss.acks)
@@ -560,65 +574,149 @@ elif page.startswith("6"):
                "so the person who knows what they meant does the checking. A number is only trusted once its vendor confirms it.")
     vk = st.selectbox("Viewing as", list(R.keys()), format_func=lambda k: f"{R[k]['name']} (vendor)")
     v = R[vk]
-    st.markdown(f"Dear **{v['name']}**, thank you for your quote against **RFQ KHA/PKG/RFQ/2026-27/014**. "
-                "Below is how we read every line. **Please check each value and confirm it, or type the correct one.** "
-                "Lines where we were least sure are at the top.")
-    rows = []
-    for l in v["lines"]:
-        it = next(x for x in items if x["id"] == l["rfq_line"])
-        ov = ss.overrides.get(f"{vk}:{it['id']}")
-        doubts = [f["message"] for f in l["flags"] if f["severity"] in ("blocker", "warning")]
-        if l["confidence"] == "low":
-            doubts.insert(0, "We were not sure we read this correctly.")
-        steps = [t for t in (l.get("trail") or [])[1:-1]]
-        read = l["norm_inr"]
-        rows.append({
-            "Line": it["id"], "Item": it["name"], "Qty": it["annual_qty"], "UoM": it["uom"],
-            "You wrote": l.get("as_written") or ("not quoted" if read is None else "—"),
-            "How we converted it": " → ".join(steps) if steps else "no conversion needed",
-            f"We read it as (₹ per unit, ex-GST)": read,
-            "Correct value (₹ per unit, ex-GST)": ov["value"] if ov else read,
-            "Why please check": (doubts[0][:140] if doubts else ""),
-            "Status": ("✅ confirmed" if ov and ov.get("source") == "vendor" else "awaiting your confirmation"),
-            "_priority": 0 if doubts else 1,
-        })
-    df_p = pd.DataFrame(rows).sort_values(["_priority", "Line"]).drop(columns="_priority")
-    n_check = int((df_p["Why please check"] != "").sum())
-    n_done = int((df_p["Status"] == "✅ confirmed").sum())
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Lines in your quote", len(df_p))
-    c2.metric("Need a closer look", n_check)
-    c3.metric("Confirmed so far", n_done)
-    edited = st.data_editor(
-        df_p, hide_index=True, width="stretch", height=460, key=f"portal_{vk}",
-        disabled=[c for c in df_p.columns if c != "Correct value (₹ per unit, ex-GST)"],
-        column_config={
-            "Correct value (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f", min_value=0.0,
-                help="Leave as is to confirm our reading, or type the correct price per unit, excluding GST."),
-            "We read it as (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f"),
-            "How we converted it": st.column_config.TextColumn(width="large"),
-            "Why please check": st.column_config.TextColumn(width="large"),
-        })
-    st.caption("Changing a value marks it as corrected by you; leaving it unchanged confirms our reading.")
-    if st.button("✅ Confirm all lines and send to buyer", type="primary"):
-        n_conf = n_corr = 0
-        for _, r in edited.iterrows():
-            val = r["Correct value (₹ per unit, ex-GST)"]
-            if val is None or pd.isna(val):
-                continue
-            read = r["We read it as (₹ per unit, ex-GST)"]
-            changed = read is None or pd.isna(read) or abs(float(val) - float(read)) > 0.005
-            ss.overrides[f"{vk}:{int(r['Line'])}"] = {"value": float(val), "source": "vendor", "by": f"{v['name']} (vendor)",
-                                                     "reason": "corrected by vendor via portal" if changed else "confirmed by vendor via portal",
-                                                     "at": datetime.now().isoformat()}
-            if changed:
-                n_corr += 1
-                log("Vendor correction", f"{vk} line {int(r['Line'])}: {read} → {float(val):.2f}", by=f"{v['name']} (vendor)")
-            else:
-                n_conf += 1
-        log("Vendor confirmation", f"{vk}: {n_conf} lines confirmed, {n_corr} corrected", by=f"{v['name']} (vendor)")
-        st.success(f"Thank you. {n_conf} values confirmed and {n_corr} corrected; the buyer can now see them as vendor-confirmed.")
-        st.rerun()
+    st.markdown(f"Dear **{v['name']}**, thank you for your quote against **RFQ KHA/PKG/RFQ/2026-27/014**.")
+    tab_elig, tab_lines = st.tabs(["① Your eligibility", "② Confirm your prices"])
+
+    # ---------------- ① eligibility: ask for exactly what blocks this vendor, check the evidence, re-qualify
+    with tab_elig:
+        qual = v["qualification"]["overall"]
+        st.markdown(f"**Current status:** {badge(qual)}", unsafe_allow_html=True)
+        if v.get("update_summary"):
+            u = v["update_summary"]
+            st.success(f"Updates received {u['at']}: {'; '.join(u['notes'])}. Status: {u['before'].replace('_', ' ')} → {u['after'].replace('_', ' ')}.")
+        reqs = updates.requirements(v)
+        fixable = [r for r in reqs if r["kind"] != "buyer_decision"]
+        if not fixable:
+            st.success("Nothing further is needed from you for eligibility.")
+        else:
+            st.markdown(f"To be considered for award, please resolve the following **{len(fixable)} item(s)**:")
+            with st.form(f"elig_{vk}"):
+                answers = {}
+                for r in fixable:
+                    st.markdown(f"**{r['title']}**  \n<span class='qd-muted'>Why: {r['why']}</span>", unsafe_allow_html=True)
+                    if r["kind"] == "certificate":
+                        answers[r["id"]] = st.file_uploader(r["ask"], type=["pdf", "png", "jpg", "jpeg"], key=f"cert_{vk}")
+                    elif r["kind"] == "commitment":
+                        answers[r["id"]] = st.checkbox(r["ask"], key=f"chk_{vk}_{r['id']}")
+                    elif r["kind"] == "validity":
+                        answers[r["id"]] = st.date_input(r["ask"], value=SETTINGS["deadline"].date() + timedelta(days=90),
+                                                         min_value=SETTINGS["deadline"].date(), key=f"val_{vk}")
+                    elif r["kind"] == "freight":
+                        answers[r["id"]] = st.radio(r["ask"], ["Prices include freight to Hosur (FOR Hosur)", "Freight is extra"],
+                                                    index=None, key=f"fr_{vk}")
+                    st.divider()
+                submitted = st.form_submit_button("Submit to buyer", type="primary")
+            if submitted:
+                up = dict(ss.vendor_updates.get(vk, {}))
+                up["at"] = datetime.now().strftime("%Y-%m-%d")
+                msgs = []
+                for r in fixable:
+                    a = answers.get(r["id"])
+                    if r["kind"] == "certificate" and a is not None:
+                        mime = {"pdf": "application/pdf", "png": "image/png"}.get(a.name.rsplit(".", 1)[-1].lower(), "image/jpeg")
+                        with st.status("Reading your certificate…", expanded=False) as stt:
+                            try:
+                                cert = updates.read_certificate(a.getvalue(), mime, on_status=lambda m: stt.update(label=f"Reading your certificate… {m}"))
+                                ok, why = updates.validate_certificate(cert, v["name"])
+                            except Exception as e:
+                                ok, why, cert = False, f"Could not read the file: {e}", {}
+                        if ok:
+                            up["certificate"] = {"accepted": True, "data": cert, "file": a.name}
+                            msgs.append(("ok", f"Certificate accepted: {why}"))
+                        else:
+                            msgs.append(("err", f"Certificate not accepted: {why}"))
+                        log("Vendor certificate " + ("accepted" if ok else "rejected"), f"{vk} {a.name}: {why}", by=f"{v['name']} (vendor)")
+                    elif r["kind"] == "commitment" and a:
+                        up[r["id"]] = True
+                        msgs.append(("ok", f"{r['title']}: confirmed"))
+                        log("Vendor commitment", f"{vk} {r['id']}: {r['ask']}", by=f"{v['name']} (vendor)")
+                    elif r["kind"] == "validity" and a:
+                        if a >= SETTINGS["deadline"].date() + timedelta(days=90):
+                            up["validity_until"] = a.isoformat()
+                            msgs.append(("ok", f"Validity extended to {a:%d %b %Y}"))
+                            log("Vendor validity extension", f"{vk}: valid until {a:%d %b %Y}", by=f"{v['name']} (vendor)")
+                        else:
+                            msgs.append(("err", "Validity must run at least 90 days from the RFQ deadline."))
+                    elif r["kind"] == "freight" and a:
+                        up["freight"] = "included" if a.startswith("Prices include") else "extra"
+                        msgs.append(("ok", f"Freight clarified: {up['freight']}"))
+                        log("Vendor clarification", f"{vk}: freight {up['freight']}", by=f"{v['name']} (vendor)")
+                ss.vendor_updates[vk] = up
+                ss.portal_msgs = msgs
+                st.rerun()
+            for kind, m in ss.pop("portal_msgs", []):
+                (st.success if kind == "ok" else st.error)(m)
+        others = [r for r in reqs if r["kind"] == "buyer_decision"]
+        if others:
+            st.caption("Also under the buyer's review (no action needed from you): " + " ".join(r["why"] for r in others))
+        with st.expander("Demo only: sample documents a vendor might upload"):
+            st.caption("Download one, then upload it above as the matching vendor. One of them should be rejected.")
+            samples = sorted((DATA / "portal_samples").glob("*"))
+            sc = st.columns(2)
+            for i, f in enumerate(samples):
+                sc[i % 2].download_button(f.name, f.read_bytes(), file_name=f.name, key=f"smp_{vk}_{f.name}", width="stretch")
+
+    tab_lines.markdown("Below is how we read every line. **Please check each value and confirm it, or type the correct one.** "
+                       "Lines that most need your check are at the top: suspected errors first, then readings we were unsure "
+                       "of, then converted units; within each, the lines with the most money at stake.")
+    with tab_lines:
+        rows = []
+        for l in v["lines"]:
+            it = next(x for x in items if x["id"] == l["rfq_line"])
+            ov = ss.overrides.get(f"{vk}:{it['id']}")
+            doubts = [f["message"] for f in l["flags"] if f["severity"] in ("blocker", "warning")]
+            if l["confidence"] == "low":
+                doubts.insert(0, "We were not sure we read this correctly.")
+            sev = 0 if any(f["severity"] == "blocker" for f in l["flags"]) else (1 if l["confidence"] == "low" else (2 if doubts else 3))
+            steps = [t for t in (l.get("trail") or [])[1:-1]]
+            read = l["norm_inr"]
+            rows.append({
+                "Line": it["id"], "Item": it["name"], "Qty": it["annual_qty"], "UoM": it["uom"],
+                "You wrote": l.get("as_written") or ("not quoted" if read is None else "—"),
+                "How we converted it": " → ".join(steps) if steps else "no conversion needed",
+                f"We read it as (₹ per unit, ex-GST)": read,
+                "Correct value (₹ per unit, ex-GST)": ov["value"] if ov else read,
+                "Why please check": (doubts[0][:140] if doubts else ""),
+                "Status": ("✅ confirmed" if ov and ov.get("source") == "vendor" else "awaiting your confirmation"),
+                "_priority": sev, "_value": -((l["norm_inr"] or 0) * it["annual_qty"]),
+            })
+        df_p = pd.DataFrame(rows).sort_values(["_priority", "_value", "Line"]).drop(columns=["_priority", "_value"])
+        n_check = int((df_p["Why please check"] != "").sum())
+        n_done = int((df_p["Status"] == "✅ confirmed").sum())
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Lines in your quote", len(df_p))
+        c2.metric("Need a closer look", n_check)
+        c3.metric("Confirmed so far", n_done)
+        edited = st.data_editor(
+            df_p, hide_index=True, width="stretch", height=460, key=f"portal_{vk}",
+            disabled=[c for c in df_p.columns if c != "Correct value (₹ per unit, ex-GST)"],
+            column_config={
+                "Correct value (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f", min_value=0.0,
+                    help="Leave as is to confirm our reading, or type the correct price per unit, excluding GST."),
+                "We read it as (₹ per unit, ex-GST)": st.column_config.NumberColumn(format="%.2f"),
+                "How we converted it": st.column_config.TextColumn(width="large"),
+                "Why please check": st.column_config.TextColumn(width="large"),
+            })
+        st.caption("Changing a value marks it as corrected by you; leaving it unchanged confirms our reading.")
+        if st.button("✅ Confirm all lines and send to buyer", type="primary"):
+            n_conf = n_corr = 0
+            for _, r in edited.iterrows():
+                val = r["Correct value (₹ per unit, ex-GST)"]
+                if val is None or pd.isna(val):
+                    continue
+                read = r["We read it as (₹ per unit, ex-GST)"]
+                changed = read is None or pd.isna(read) or abs(float(val) - float(read)) > 0.005
+                ss.overrides[f"{vk}:{int(r['Line'])}"] = {"value": float(val), "source": "vendor", "by": f"{v['name']} (vendor)",
+                                                         "reason": "corrected by vendor via portal" if changed else "confirmed by vendor via portal",
+                                                         "at": datetime.now().isoformat()}
+                if changed:
+                    n_corr += 1
+                    log("Vendor correction", f"{vk} line {int(r['Line'])}: {read} → {float(val):.2f}", by=f"{v['name']} (vendor)")
+                else:
+                    n_conf += 1
+            log("Vendor confirmation", f"{vk}: {n_conf} lines confirmed, {n_corr} corrected", by=f"{v['name']} (vendor)")
+            st.success(f"Thank you. {n_conf} values confirmed and {n_corr} corrected; the buyer can now see them as vendor-confirmed.")
+            st.rerun()
 
 # ================================================================== 7. AUDIT LOG
 elif page.startswith("7"):
