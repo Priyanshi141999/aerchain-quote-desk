@@ -66,11 +66,14 @@ def _parse_json(text: str) -> dict:
 
 
 # ---------------------------------------------------------------- Gemini
-def _gemini_client():
+def _gemini_client(timeout_s: float | None = None):
     from google import genai
+    from google.genai import types
     key = _secret("GEMINI_API_KEY")
     if not key:
         raise RuntimeError("GEMINI_API_KEY is not set")
+    if timeout_s:
+        return genai.Client(api_key=key, http_options=types.HttpOptions(timeout=int(timeout_s * 1000)))
     return genai.Client(api_key=key)
 
 
@@ -102,9 +105,9 @@ def gemini_model(client=None) -> str:
     return gemini_candidates(client)[0]
 
 
-def _call_gemini(system: str, parts: list[Part], max_tokens: int, model: str) -> tuple[str, str]:
+def _call_gemini(system: str, parts: list[Part], max_tokens: int, model: str, timeout_s: float | None = None) -> tuple[str, str]:
     from google.genai import types
-    client = _gemini_client()
+    client = _gemini_client(timeout_s)
     contents = []
     for p in parts:
         if p.text is not None:
@@ -123,12 +126,12 @@ def _call_gemini(system: str, parts: list[Part], max_tokens: int, model: str) ->
 
 
 # ---------------------------------------------------------------- Claude
-def _call_claude(system: str, parts: list[Part], max_tokens: int, model: str = CLAUDE_DEFAULT) -> tuple[str, str]:
+def _call_claude(system: str, parts: list[Part], max_tokens: int, model: str = CLAUDE_DEFAULT, timeout_s: float | None = None) -> tuple[str, str]:
     import anthropic
     key = _secret("ANTHROPIC_API_KEY")
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set")
-    client = anthropic.Anthropic(api_key=key)
+    client = anthropic.Anthropic(api_key=key, timeout=timeout_s or 600, max_retries=0)
     content = []
     for p in parts:
         if p.text is not None:
@@ -145,30 +148,71 @@ def _call_claude(system: str, parts: list[Part], max_tokens: int, model: str = C
     return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text"), model
 
 
-BUSY = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded", "high demand", "rate limit", "529")
+BUSY = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded", "high demand", "rate limit", "529",
+        "timed out", "timeout", "deadline")
+_cooldown: dict[str, float] = {}   # model -> time until which we skip it (it was busy / out of quota)
+COOLDOWN_S = 300
 
 
-def complete_json(system: str, parts: list[Part], max_tokens: int = 16000, retries: int = 2) -> LLMResult:
-    """Call the model; if it is busy, wait and retry, then fall back to the next-best model."""
+def _ordered_models(prov: str, fast: bool) -> list[str]:
+    if prov == "claude":
+        return [os.environ.get("CLAUDE_MODEL", CLAUDE_DEFAULT), "claude-opus-5-5"]
+    models = list(gemini_candidates())
+    if fast:  # interactive features: a quick good answer beats a slow perfect one
+        lite = [m for m in models if "lite" in m]
+        models = lite + [m for m in models if m not in lite]
+    now = time.time()
+    ready = [m for m in models if _cooldown.get(m, 0) <= now]
+    resting = [m for m in models if m not in ready]
+    return ready + resting
+
+
+def complete_json(system: str, parts: list[Part], max_tokens: int = 16000, retries: int = 2,
+                  fast: bool = False, budget_s: float | None = None, on_status=None) -> LLMResult:
+    """Call the model; if it is busy, move on quickly to the next model. Never hang longer than budget_s.
+
+    fast=True is for interactive screens: lighter models first, short per-call timeout, ~2 minute total budget.
+    """
     prov = provider()
-    models = gemini_candidates() if prov == "gemini" else [os.environ.get("CLAUDE_MODEL", CLAUDE_DEFAULT), "claude-opus-5-5"]
-    errors = []
+    models = _ordered_models(prov, fast)
+    budget_s = budget_s or (150 if fast else 900)
+    per_call = 90 if fast else 420
+    start, errors = time.time(), []
+
+    def say(msg):
+        print(f"[llm] {msg}", flush=True)
+        if on_status:
+            try:
+                on_status(msg)
+            except Exception:
+                pass
+
     for model in models[:8]:
         for attempt in range(retries):
+            left = budget_s - (time.time() - start)
+            if left < 10:
+                raise RuntimeError(f"The AI service didn't answer within {budget_s:.0f}s (models busy or out of free quota). "
+                                   "Please try again in a minute. Tried: " + "; ".join(errors[-3:]))
             t0 = time.time()
+            say(f"Asking {model}…" if attempt == 0 else f"Retrying {model}…")
             try:
                 if prov == "claude":
-                    text, used = _call_claude(system, parts, max_tokens, model)
+                    text, used = _call_claude(system, parts, max_tokens, model, timeout_s=min(per_call, left))
                 else:
-                    text, used = _call_gemini(system, parts, max_tokens, model)
+                    text, used = _call_gemini(system, parts, max_tokens, model, timeout_s=min(per_call, left))
                 return LLMResult(data=_parse_json(text), provider=prov, model=used,
                                  seconds=round(time.time() - t0, 1), raw_text=text)
             except Exception as e:
                 msg = str(e)
-                errors.append(f"{model}: {msg[:160]}")
+                errors.append(f"{model}: {msg[:140]}")
                 busy = any(b.lower() in msg.lower() for b in BUSY)
-                print(f"[llm] {model} attempt {attempt + 1} failed ({'busy' if busy else 'error'}): {msg[:120]}", flush=True)
-                if not busy and "JSON" not in msg and "Expecting" not in msg:
-                    break  # a real error (bad key, bad request): try the next model, don't hammer this one
-                time.sleep(10 * (attempt + 1))
+                bad_json = "JSON" in msg or "Expecting" in msg
+                if busy:
+                    _cooldown[model] = time.time() + COOLDOWN_S
+                    say(f"{model} is busy or out of quota, switching model…")
+                    break  # don't wait on a busy model: go straight to the next one
+                if not bad_json:
+                    say(f"{model} failed ({msg[:80]}), switching model…")
+                    break
+                time.sleep(2)
     raise RuntimeError(f"{prov}: all models failed. " + " | ".join(errors[-4:]))

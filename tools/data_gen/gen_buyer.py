@@ -46,14 +46,15 @@ with open(f"{OUT}/questionnaire.json", "w") as f:
 # 3. Last year's contract (incumbent) ------------------------------------------------
 with open(f"{OUT}/last_year_contract_annapurna_FY25-26.csv", "w", newline="") as f:
     w = csv.writer(f)
-    w.writerow(["contract_no", "vendor", "line_no", "item", "board_grade", "bursting_factor_bf", "uom", "price_inr_ex_gst", "freight_terms", "valid_till"])
+    w.writerow(["contract_no", "vendor", "line_no", "item", "form", "board_grade", "construction", "dimensions",
+                "bursting_factor_bf", "print_colours", "annual_qty", "uom", "price_inr_ex_gst", "freight_terms", "valid_till"])
     for it in ITEMS:
         p = last_year_price(it)
         if p is None:
             continue
         bf = 20 if it["id"] == 5 else it["bf"]
-        w.writerow(["KHA/PKG/CT/2025-26/003", "Annapurna Packers", it["id"], it["name"], it["board"], bf or "", it["uom"], p,
-                    "FOR Hosur (included)", "2026-10-31"])
+        w.writerow(["KHA/PKG/CT/2025-26/003", "Annapurna Packers", it["id"], it["name"], it["form"], it["board"], it["construction"],
+                    it["dims"], bf or "", it["print_colours"], it["annual_qty"], it["uom"], p, "FOR Hosur (included)", "2026-10-31"])
 
 # 4. Quote template sent to vendors --------------------------------------------------
 wb = Workbook(); ws = wb.active; ws.title = "Price Bid"

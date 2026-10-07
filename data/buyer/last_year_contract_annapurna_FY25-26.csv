@@ -1,29 +1,29 @@
-contract_no,vendor,line_no,item,board_grade,bursting_factor_bf,uom,price_inr_ex_gst,freight_terms,valid_till
-KHA/PKG/CT/2025-26/003,Annapurna Packers,1,Kettle 1.5L unit carton,3-ply B,16,piece,7.42,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,2,Steam iron unit carton,3-ply B,16,piece,6.51,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,3,Hair dryer retail carton (printed),3-ply E,18,piece,6.22,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,4,Mixer grinder 500W unit carton,5-ply BC,20,piece,33.84,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,5,Mixer grinder 750W unit carton,5-ply BC,20,piece,37.29,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,6,Mixer grinder master carton (2 units),5-ply BC,22,piece,65.36,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,7,Induction cooktop unit carton,5-ply BC,20,piece,25.85,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,8,Pressure cooker 3L carton,3-ply B,18,piece,11.25,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,9,Pressure cooker 5L carton,5-ply BC,20,piece,28.76,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,10,RO water purifier carton,5-ply BC,22,piece,52.82,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,11,Air cooler 40L carton,7-ply BCB,24,piece,200.44,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,12,Ceiling fan blade carton,5-ply BC,20,piece,30.02,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,13,Ceiling fan motor carton,5-ply BC,20,piece,33.34,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,14,Table fan carton,5-ply BC,20,piece,35.84,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,15,Toaster unit carton,3-ply B,18,piece,9.14,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,16,Spares shipper - small (plain),3-ply B,16,piece,6.51,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,17,Spares shipper - medium (plain),3-ply B,16,piece,15.21,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,18,E-commerce outer carton - large,5-ply BC,20,piece,57.78,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,19,Export master carton - mixer (4 units),7-ply BCB,26,piece,187.79,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,21,"Partition, 12-cell (kettle master)",3-ply B,16,set,7.96,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,22,"Partition, 6-cell (spares)",3-ply B,16,set,5.19,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,23,Die-cut insert tray - mixer jar,3-ply B,16,piece,5.89,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,25,Layer pad 1200 x 1000 mm,3-ply B,16,piece,20.57,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,26,Layer pad 800 x 600 mm,3-ply B,16,piece,8.21,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,27,"Corner protector pad 150 x 150 mm, die-cut",5-ply BC,20,piece,1.57,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,28,Single-face corrugated roll 1000 mm x 50 m,2-ply,,roll,783.0,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,29,Single-face corrugated roll 1200 mm x 50 m,2-ply,,roll,939.6,FOR Hosur (included),2026-10-31
-KHA/PKG/CT/2025-26/003,Annapurna Packers,30,"Air cooler base tray / sleeve, heavy duty",7-ply BCB,24,piece,54.83,FOR Hosur (included),2026-10-31
+contract_no,vendor,line_no,item,form,board_grade,construction,dimensions,bursting_factor_bf,print_colours,annual_qty,uom,price_inr_ex_gst,freight_terms,valid_till
+KHA/PKG/CT/2025-26/003,Annapurna Packers,1,Kettle 1.5L unit carton,RSC,3-ply B,"150/120/150 GSM kraft, B-flute","230 x 190 x 250 mm (internal, L x W x H)",16,1,120000,piece,7.42,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,2,Steam iron unit carton,RSC,3-ply B,"150/120/150 GSM kraft, B-flute","310 x 150 x 170 mm (internal, L x W x H)",16,2,150000,piece,6.51,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,3,Hair dryer retail carton (printed),RSC,3-ply E,"150/100/150 GSM kraft, E-flute (printable white top 150 GSM)","260 x 110 x 220 mm (internal, L x W x H)",18,4,90000,piece,6.22,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,4,Mixer grinder 500W unit carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","390 x 300 x 360 mm (internal, L x W x H)",20,2,80000,piece,33.84,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,5,Mixer grinder 750W unit carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","420 x 320 x 390 mm (internal, L x W x H)",20,2,70000,piece,37.29,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,6,Mixer grinder master carton (2 units),RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","650 x 430 x 410 mm (internal, L x W x H)",22,1,35000,piece,65.36,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,7,Induction cooktop unit carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","410 x 340 x 120 mm (internal, L x W x H)",20,2,65000,piece,25.85,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,8,Pressure cooker 3L carton,RSC,3-ply B,"150/120/150 GSM kraft, B-flute","280 x 260 x 250 mm (internal, L x W x H)",18,2,100000,piece,11.25,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,9,Pressure cooker 5L carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","330 x 310 x 290 mm (internal, L x W x H)",20,2,75000,piece,28.76,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,10,RO water purifier carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","480 x 330 x 560 mm (internal, L x W x H)",22,2,40000,piece,52.82,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,11,Air cooler 40L carton,RSC,7-ply BCB,"200/120/150/120/150/120/200 GSM kraft, BCB-flute","640 x 460 x 1050 mm (internal, L x W x H)",24,1,18000,piece,200.44,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,12,Ceiling fan blade carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","1250 x 180 x 110 mm (internal, L x W x H)",20,1,60000,piece,30.02,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,13,Ceiling fan motor carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","380 x 380 x 220 mm (internal, L x W x H)",20,1,60000,piece,33.34,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,14,Table fan carton,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","440 x 240 x 480 mm (internal, L x W x H)",20,1,30000,piece,35.84,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,15,Toaster unit carton,RSC,3-ply B,"150/120/150 GSM kraft, B-flute","320 x 200 x 220 mm (internal, L x W x H)",18,2,45000,piece,9.14,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,16,Spares shipper - small (plain),RSC,3-ply B,"150/120/150 GSM kraft, B-flute","300 x 200 x 150 mm (internal, L x W x H)",16,0,200000,piece,6.51,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,17,Spares shipper - medium (plain),RSC,3-ply B,"150/120/150 GSM kraft, B-flute","450 x 300 x 250 mm (internal, L x W x H)",16,0,120000,piece,15.21,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,18,E-commerce outer carton - large,RSC,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","600 x 400 x 400 mm (internal, L x W x H)",20,1,50000,piece,57.78,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,19,Export master carton - mixer (4 units),RSC,7-ply BCB,"200/120/150/120/150/120/200 GSM kraft, BCB-flute","820 x 640 x 430 mm (internal, L x W x H)",26,1,8000,piece,187.79,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,21,"Partition, 12-cell (kettle master)",Partition set,3-ply B,"150/120/150 GSM kraft, B-flute",Fits 460 x 380 x 260 mm master; 12 cells; 2 x 5 slotted strips,16,0,20000,set,7.96,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,22,"Partition, 6-cell (spares)",Partition set,3-ply B,"150/120/150 GSM kraft, B-flute",Fits 450 x 300 x 250 mm shipper; 6 cells,16,0,30000,set,5.19,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,23,Die-cut insert tray - mixer jar,Die-cut insert,3-ply B,"150/120/150 GSM kraft, B-flute","Flat 520 x 480 mm die-cut, folds to cradle 2 jars",16,0,80000,piece,5.89,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,25,Layer pad 1200 x 1000 mm,Pad,3-ply B,"150/120/150 GSM kraft, B-flute",1200 x 1000 mm flat sheet,16,0,25000,piece,20.57,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,26,Layer pad 800 x 600 mm,Pad,3-ply B,"150/120/150 GSM kraft, B-flute",800 x 600 mm flat sheet,16,0,40000,piece,8.21,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,27,"Corner protector pad 150 x 150 mm, die-cut",Die-cut pad,5-ply BC,"180/120/120/120/180 GSM kraft, BC-flute","150 x 150 mm flat, 5-ply, die-cut with V-notch",20,0,140000,piece,1.57,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,28,Single-face corrugated roll 1000 mm x 50 m,Roll,2-ply,"Single-face, 150 GSM kraft liner / 120 GSM B-flute medium","1000 mm wide x 50 m long, rolled on 75 mm core",,0,1500,roll,783.0,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,29,Single-face corrugated roll 1200 mm x 50 m,Roll,2-ply,"Single-face, 150 GSM kraft liner / 120 GSM B-flute medium","1200 mm wide x 50 m long, rolled on 75 mm core",,0,900,roll,939.6,FOR Hosur (included),2026-10-31
+KHA/PKG/CT/2025-26/003,Annapurna Packers,30,"Air cooler base tray / sleeve, heavy duty",Die-cut tray,7-ply BCB,"200/120/150/120/150/120/200 GSM kraft, BCB-flute","Flat 1180 x 800 mm die-cut, folds to 660 x 480 x 200 mm tray",24,1,18000,piece,54.83,FOR Hosur (included),2026-10-31

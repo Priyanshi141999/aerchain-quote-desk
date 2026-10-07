@@ -230,7 +230,7 @@ def verify_numbers(answer: str, result, question: str = "") -> dict:
     return {"checked": checked, "unverified": unverified}
 
 
-def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict], history: list[dict] | None = None) -> dict:
+def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[dict], history: list[dict] | None = None, on_status=None) -> dict:
     L, V, I = _safe_frames(lines, vendors, items)
     hist = ""
     for h in (history or [])[-4:]:
@@ -238,16 +238,16 @@ def ask(question: str, lines: pd.DataFrame, vendors: pd.DataFrame, items: list[d
     context = (f"Sample of `lines` (first 8 rows):\n{L.head(8).to_csv(index=False)}\n"
                f"`vendors` (all rows):\n{V.to_csv(index=False)}\n"
                f"Previous conversation:\n{hist or '(none)'}\n\nQUESTION: {question}")
-    plan = complete_json(PLAN_SYSTEM, [Part(text=context)], max_tokens=6000).data
+    plan = complete_json(PLAN_SYSTEM, [Part(text=context)], max_tokens=6000, fast=True, on_status=on_status).data
     out = run_code(plan.get("code", ""), L, V, I)
     if "error" in out:  # one self-correction round, with the real error
         fix_ctx = context + f"\n\nYour previous code:\n{plan.get('code')}\n\nIt failed with:\n{out['error']}\nFix it."
-        plan = complete_json(PLAN_SYSTEM, [Part(text=fix_ctx)], max_tokens=6000).data
+        plan = complete_json(PLAN_SYSTEM, [Part(text=fix_ctx)], max_tokens=6000, fast=True, on_status=on_status).data
         out = run_code(plan.get("code", ""), L, V, I)
     computed = out.get("error") and f"ERROR: {out['error']}" or _render(out["result"])
     ans = complete_json(ANSWER_SYSTEM, [Part(text=(
         f"QUESTION: {question}\nINTERPRETATION: {plan.get('interpretation')}\n"
-        f"ASSUMPTIONS: {plan.get('assumptions')}\nCOMPUTED RESULTS:\n{computed}"))], max_tokens=3000).data
+        f"ASSUMPTIONS: {plan.get('assumptions')}\nCOMPUTED RESULTS:\n{computed}"))], max_tokens=3000, fast=True, on_status=on_status).data
     check = verify_numbers(ans.get("answer_markdown", ""), out.get("result"), question)
     return {"question": question, "plan": plan, "result": out.get("result"), "fig": out.get("fig"),
             "export": out.get("export"), "error": out.get("error"), "answer": ans, "number_check": check}

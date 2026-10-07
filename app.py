@@ -171,21 +171,30 @@ if page.startswith("1"):
         if msg:
             if not available_providers():
                 st.error("Add an API key to use the co-pilot live.")
-            else:
+            else:  # show the buyer's message immediately, then work on the reply
                 ss.copilot_msgs.append({"role": "user", "content": msg})
-                with st.spinner("Co-pilot is drafting…"):
-                    try:
-                        out = copilot.turn(msg, ss.draft, attach_text if len(ss.copilot_msgs) <= 2 else None, ss.copilot_msgs[:-1])
-                        ss.draft = out.get("draft") or ss.draft
-                        reply = out.get("reply", "")
-                        if out.get("open_questions"):
-                            reply += "\n\n**Questions for you:**\n" + "\n".join(f"- {q}" for q in out["open_questions"])
-                        if out.get("assumptions"):
-                            reply += "\n\n**Assumptions I made (change any):**\n" + "\n".join(f"- {a}" for a in out["assumptions"])
-                        ss.copilot_msgs.append({"role": "assistant", "content": reply})
-                    except Exception as e:
-                        ss.copilot_msgs.append({"role": "assistant", "content": f"Sorry, the AI call failed: {e}"})
+                ss.copilot_working = msg
                 st.rerun()
+        if ss.get("copilot_working"):
+            msg = ss.copilot_working
+            with st.status("Co-pilot is drafting the RFQ…", expanded=True) as status:
+                st.write("Reading last year's contract and applying your changes (usually 20–60 s).")
+                try:
+                    out = copilot.turn(msg, ss.draft, attach_text if len(ss.copilot_msgs) <= 2 else None, ss.copilot_msgs[:-1],
+                                       on_status=lambda m: status.update(label=f"Co-pilot is drafting… {m}"))
+                    ss.draft = out.get("draft") or ss.draft
+                    reply = out.get("reply", "")
+                    if out.get("open_questions"):
+                        reply += "\n\n**Questions for you:**\n" + "\n".join(f"- {q}" for q in out["open_questions"])
+                    if out.get("assumptions"):
+                        reply += "\n\n**Assumptions I made (change any):**\n" + "\n".join(f"- {a}" for a in out["assumptions"])
+                    ss.copilot_msgs.append({"role": "assistant", "content": reply})
+                    status.update(label="Draft updated", state="complete")
+                except Exception as e:
+                    ss.copilot_msgs.append({"role": "assistant", "content": f"⚠️ I couldn't reach the AI just now: {e}"})
+                    status.update(label="AI call failed", state="error")
+            ss.copilot_working = None
+            st.rerun()
     with right:
         d = ss.draft
         if not d:
@@ -433,13 +442,14 @@ elif page.startswith("5"):
             if exp is not None:
                 buf = io.BytesIO(); exp.to_excel(buf, index=False)
                 st.download_button("⬇️ Download as Excel", buf.getvalue(), file_name=f"analysis_{i + 1}.xlsx", key=f"dl{i}")
-            with st.expander("How I worked this out"):
-                st.markdown(f"**Interpretation:** {h['plan'].get('interpretation')}")
-                for a_ in h["plan"].get("assumptions", []):
-                    st.markdown(f"- {a_}")
-                st.code(h["plan"].get("code", ""), language="python")
-                if h.get("error"):
-                    st.error(h["error"])
+            if h.get("plan"):
+                with st.expander("How I worked this out"):
+                    st.markdown(f"**Interpretation:** {h['plan'].get('interpretation')}")
+                    for a_ in h["plan"].get("assumptions", []):
+                        st.markdown(f"- {a_}")
+                    st.code(h["plan"].get("code", ""), language="python")
+                    if h.get("error"):
+                        st.error(h["error"])
             if h.get("followups"):
                 st.caption("You could ask next: " + " · ".join(h["followups"]))
     q = st.chat_input("Ask anything about the quotes…") or ss.pop("pending_q", None)
@@ -447,21 +457,32 @@ elif page.startswith("5"):
         if not available_providers():
             st.error("Add an API key to ask questions live.")
         else:
-            with st.spinner("Planning the analysis, running it on the data, writing it up…"):
-                try:
-                    out = analyst.ask(q, L, V, items, ss.chat)
-                    res = out["result"]
-                    if isinstance(res, dict):
-                        res = next((v for v in res.values() if isinstance(v, (pd.DataFrame, pd.Series))), None)
-                    tbl = res if isinstance(res, pd.DataFrame) else (res.reset_index() if isinstance(res, pd.Series) else None)
-                    ss.chat.append({"q": q, "answer": out["answer"].get("answer_markdown", ""), "caveats": out["answer"].get("caveats", []),
-                                    "followups": out["answer"].get("followups", []), "plan": out["plan"], "fig": out["fig"],
-                                    "table": tbl, "export": out.get("export"), "error": out.get("error"),
-                                    "number_check": out.get("number_check")})
-                    log("Analyst question", q)
-                except Exception as e:
-                    st.error(f"The AI call failed: {e}")
+            ss.analyst_working = q
             st.rerun()
+    if ss.get("analyst_working"):
+        q = ss.analyst_working
+        with st.chat_message("user"):
+            st.markdown(q)
+        with st.status("Working on it…", expanded=True) as status:
+            st.write("1. AI plans the calculation → 2. code runs it on the extracted quotes → 3. AI writes up only what was computed.")
+            try:
+                out = analyst.ask(q, L, V, items, ss.chat, on_status=lambda m: status.update(label=f"Working on it… {m}"))
+                res = out["result"]
+                if isinstance(res, dict):
+                    res = next((v for v in res.values() if isinstance(v, (pd.DataFrame, pd.Series))), None)
+                tbl = res if isinstance(res, pd.DataFrame) else (res.reset_index() if isinstance(res, pd.Series) else None)
+                ss.chat.append({"q": q, "answer": out["answer"].get("answer_markdown", ""), "caveats": out["answer"].get("caveats", []),
+                                "followups": out["answer"].get("followups", []), "plan": out["plan"], "fig": out["fig"],
+                                "table": tbl, "export": out.get("export"), "error": out.get("error"),
+                                "number_check": out.get("number_check")})
+                log("Analyst question", q)
+                status.update(label="Done", state="complete")
+            except Exception as e:
+                ss.chat.append({"q": q, "answer": f"⚠️ I couldn't reach the AI just now: {e}", "caveats": [], "followups": [],
+                                "plan": {}, "fig": None, "table": None, "export": None, "error": None, "number_check": None})
+                status.update(label="AI call failed", state="error")
+        ss.analyst_working = None
+        st.rerun()
 
 # ================================================================== 6. VENDOR PORTAL
 elif page.startswith("6"):

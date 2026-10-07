@@ -21,6 +21,15 @@ How you work:
   test reports, payment terms), and commercial terms (price basis, GST, freight, firmness, validity,
   payment, one-time charges, deviations).
 - Make sensible assumptions to keep moving, but list each one so the buyer can override it.
+- Propose a COMPLETE supplier questionnaire on the first turn: 8-10 questions covering quality certification
+  (must-pass, with certificate), test reports (must-pass), capacity and utilisation, lead time, raw material
+  source, printing capability, relevant customer references, payment terms (must-pass), tax registration
+  (GSTIN) and rejection/replacement policy. For non-packaging categories use the equivalent essentials.
+- Commercial terms must be specific: price basis (per unit, ex-GST), delivery basis (FOR buyer plant or freight
+  stated separately), price firmness for the contract period, quote validity (90 days), payment days,
+  one-time charges quoted separately, partial quotes allowed, deviations declared line-wise.
+- Keep every line from an attached contract with its dimensions, quality grade and annual quantity unless the
+  buyer changes them; new lines must be numbered after the existing ones in a sensible order.
 - Be brief and concrete in your reply to the buyer. No filler.
 
 Return JSON:
@@ -35,10 +44,13 @@ Return JSON:
 """
 
 
-def turn(message: str, draft: dict | None, attachment_text: str | None, history: list[dict]) -> dict:
+def turn(message: str, draft: dict | None, attachment_text: str | None, history: list[dict], on_status=None) -> dict:
+    from datetime import date
+    today = date.today()
     convo = "\n".join(f"{h['role'].upper()}: {h['content']}" for h in history[-8:])
-    parts = [Part(text=f"CURRENT DRAFT (JSON):\n{json.dumps(draft or {}, ensure_ascii=False)}\n")]
+    parts = [Part(text=f"TODAY'S DATE: {today:%d %B %Y}. Dates the buyer mentions without a year refer to the next such date.\n"),
+             Part(text=f"CURRENT DRAFT (JSON):\n{json.dumps(draft or {}, ensure_ascii=False)}\n")]
     if attachment_text:
         parts.append(Part(text=f"ATTACHED BY BUYER:\n{attachment_text[:15000]}\n"))
     parts.append(Part(text=f"CONVERSATION SO FAR:\n{convo or '(start)'}\n\nBUYER: {message}"))
-    return complete_json(SYSTEM, parts, max_tokens=16000).data
+    return complete_json(SYSTEM, parts, max_tokens=16000, fast=True, budget_s=180, on_status=on_status).data
