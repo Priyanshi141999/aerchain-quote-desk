@@ -165,7 +165,28 @@ def run_code(code: str, L, V, I) -> dict:
         return {"error": traceback.format_exc(limit=2)[-900:]}
     if "result" not in env:
         return {"error": "Code did not assign `result`."}
-    return {"result": env["result"], "fig": env.get("fig"), "export": env.get("export")}
+    return {"result": _tidy(env["result"]), "fig": env.get("fig"), "export": env.get("export")}
+
+
+def _tidy(obj):
+    """Turn lists of row-dicts into DataFrames, recursively, so tables are shown and summarised properly."""
+    if isinstance(obj, list) and obj and all(isinstance(x, dict) for x in obj):
+        return pd.DataFrame(obj)
+    if isinstance(obj, dict):
+        return {k: _tidy(v) for k, v in obj.items()}
+    return obj
+
+
+def _facts_about(df: pd.DataFrame) -> str:
+    """Counts code computes so the writer never has to count rows itself."""
+    out = [f"(table has {len(df)} rows)"]
+    if "winner" in df.columns:
+        wins = df["winner"].fillna("NO ELIGIBLE QUOTE").value_counts().to_dict()
+        out.append("lines won per vendor: " + ", ".join(f"{k}: {v} lines" for k, v in wins.items()))
+        if "annual_value" in df.columns:
+            by = df.groupby(df["winner"].fillna("none"))["annual_value"].sum().round(0).to_dict()
+            out.append("annual value per winner (INR): " + ", ".join(f"{k}: {v:,.0f}" for k, v in by.items()))
+    return " | ".join(out)
 
 
 def _render(result) -> str:
@@ -173,9 +194,10 @@ def _render(result) -> str:
         parts = []
         for k, v in result.items():
             parts.append(f"--- {k} ---\n{_render(v)}")
-        return "\n".join(parts)[:9000]
+        return "\n".join(parts)[:14000]
     if isinstance(result, pd.DataFrame):
-        return result.head(40).to_csv(index=False)
+        return _facts_about(result) + "\n" + result.head(40).to_csv(index=False) + (
+            f"... ({len(result) - 40} more rows not shown; use the counts above)" if len(result) > 40 else "")
     if isinstance(result, pd.Series):
         return result.head(40).to_string()
     try:
@@ -194,7 +216,7 @@ def _numbers_in(obj, acc=None):
             if pd.notna(v):
                 acc.add(float(v))
         for c in obj.columns:
-            if obj[c].dtype == object:
+            if not pd.api.types.is_numeric_dtype(obj[c]):
                 for v in obj[c].dropna().astype(str):
                     _numbers_in(v, acc)
     elif isinstance(obj, pd.Series):
@@ -214,16 +236,55 @@ def _numbers_in(obj, acc=None):
     return acc
 
 
+def _frames_in(obj):
+    if isinstance(obj, pd.DataFrame):
+        yield obj
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            yield from _frames_in(v)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            yield from _frames_in(v)
+
+
 def verify_numbers(answer: str, result, question: str = "") -> dict:
     """Check that every figure in the written answer can be found in the computed result (or the question)."""
     known = _numbers_in(result)
+    counts = set()   # counts ("N lines") are checked only against real counts, not against any cell value
+    for df in _frames_in(result):
+        counts.add(float(len(df)))
+        for c in df.columns:
+            if not pd.api.types.is_numeric_dtype(df[c]) and df[c].nunique() <= 12:
+                counts |= {float(v) for v in df[c].fillna("∅").value_counts().values}
+        if "winner" in df.columns:
+            counts.add(float(df["winner"].isna().sum()))
+    def _scalar_counts(o):
+        if isinstance(o, dict):
+            for v in o.values():
+                _scalar_counts(v)
+        elif isinstance(o, (list, tuple)):
+            counts.add(float(len(o)))
+            for v in o:
+                _scalar_counts(v)
+        elif isinstance(o, (int, np.integer)) and not isinstance(o, bool):
+            counts.add(float(o))
+    _scalar_counts(result if not isinstance(result, pd.DataFrame) else {})
+    counts |= _numbers_in(question)
     known |= _numbers_in(question)
     known |= {abs(k) for k in known}
     unverified, checked = [], 0
     for m in NUM.finditer(answer or ""):
         raw, unit = m.group(1), (m.group(2) or "").lower()
         x = float(raw.replace(",", ""))
-        if x <= 31 and not unit and "." not in raw:   # line numbers, counts of lines, small integers
+        after = (answer[m.end():m.end() + 12] or "").lower()
+        is_count = bool(re.match(r"\s*(lines?|items?|vendors?|of the|out of)\b", after))
+        if x <= 31 and not unit and "." not in raw and not is_count:   # line numbers, dates, small integers
+            continue
+        if is_count:
+            checked += 1
+            if x not in counts:
+                word = re.sub(r"[^a-z]", "", after.split()[0]) if after.split() else ""
+                unverified.append(f"{m.group(0).strip()} {word}".strip())
             continue
         mult = {"crore": 1e7, "cr": 1e7, "lakh": 1e5, "lakhs": 1e5, "l": 1e5}.get(unit, 1)
         val = x * mult

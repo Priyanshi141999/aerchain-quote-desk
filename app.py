@@ -418,9 +418,9 @@ elif page.startswith("5"):
         "Export a line-wise award recommendation": "Export a line-wise award recommendation to Excel.",
     }
     st.caption("Try one of these, or type your own below:")
-    ec = st.columns(3)
+    ec = st.columns(2)
     for i, (label, full) in enumerate(examples.items()):
-        if ec[i % 3].button(label, key=f"ex{i}", width="stretch", help=full):
+        if ec[i % 2].button(label, key=f"ex{i}", width="stretch", help=full):
             ss.pending_q = full
             st.rerun()
     for i, h in enumerate(ss.chat):
