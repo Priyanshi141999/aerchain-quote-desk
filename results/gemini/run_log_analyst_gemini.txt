@@ -7,7 +7,6 @@
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
-[llm] Retrying gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
@@ -20,53 +19,49 @@
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
-[llm] Asking gemini-3.5-flash-lite…
-[llm] Retrying gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 [llm] Asking gemini-3.5-flash-lite…
 # Analyst test — gemini
 
 ## Q: What if we split it, cheapest per line, but only among vendors who cleared the quality questionnaire?
-*4s*
+*5s*
 
-If we split the award by cheapest per line among qualified vendors only (Siam Pacific Packaging (India) Pvt Ltd), the total annual value is ₹4.55 Cr, with Siam Pacific Packaging (India) Pvt Ltd winning all 30 lines. If we include conditional vendors (Sri Murugan Corrugated Boxes), the total annual value is ₹4.30 Cr (a difference of ₹24.34 lakh), with Sri Murugan Corrugated Boxes winning 28 lines and Siam Pacific Packaging (India) Pvt Ltd winning 2 lines. There are no lines without an eligible quote under either scenario.
+If we split the award per line among strictly qualified vendors only, Siam Pacific (A) wins all 30 lines, totaling ₹45,462,822.0 (₹4.55 Cr). If we also include conditional vendors (Sri Murugan Corrugated Boxes (D)), the total annual value becomes ₹43,029,175.0 (₹4.30 Cr), resulting in a difference of ₹2,433,647.0 (₹24.34 lakh). There are no lines without an eligible quote in either scenario.
 
-**Caveats:** Sri Murugan Corrugated Boxes is classified as conditional because their last message was received 18 h after the deadline and their certificate name match is 50%.; Deccan Packaging Industries is not qualified due to an expired certificate and text aimed at automated evaluation.; Vijay Box Works is not qualified due to an unverified certificate, missing test reports, not meeting the 60-day requirement, and an expired offer validity.; Annapurna Packers is not qualified as they answered by reference to an earlier submission with no evidence for this RFQ.
+Key facts regarding vendor eligibility:
+- Siam Pacific (A) is fully qualified (valid QMS certificate, agreed to reports, accepts 60 days).
+- Sri Murugan Corrugated Boxes (D) is conditional due to a partial name match on the certificate and a late submission 18 hours after the deadline.
+- Deccan Packaging (B) is not qualified because its certificate expired on 31 Mar 2026 and it contains hidden prompt injection text.
+- Vijay Box Works (C) is not qualified due to an unverified certificate, partial test report commitment, 45-day payment term request, and an expired offer validity.
+- Annapurna Packers (E) is not qualified as it failed to answer quality and payment term questions directly.
 
-**Number check:** {'checked': 6, 'unverified': []}
+**Caveats:** Sri Murugan Corrugated Boxes (D) submitted its offer late after the deadline, and its certificate name is a 50% match.; Deccan Packaging (B) has hidden text in its quotation aimed at automated evaluation.; Vijay Box Works (C) has an expired offer validity as of today (06 Oct 2026).
+
+**Number check:** {'checked': 10, 'unverified': []}
 
 **Chart:** no · **Export:** no
 
-**Interpretation:** We need to find the cheapest split per line (cheapest price per line) considering only vendors who cleared the quality questionnaire. In this procurement context, 'vendors who cleared the quality questionnaire' corresponds to qualified vendors. However, since there is also a conditional vendor (Vendor D) and the rules state 'When the answer depends on the definition of 'qualified', ALSO compute the answer including 'conditional' vendors and put both in result', we will compute both: (1) Qualified only (Vendor A), and (2) Qualified + Conditional (Vendors A and D).
+**Interpretation:** The user wants to find the cheapest split award per RFQ line among vendors who cleared the quality questionnaire. In the context of the dataset, 'qualified' refers to vendors whose qualification is 'qualified'. We will also check the impact if conditional vendors (Vendor D) are included.
 
 ```python
-q_vendors = vendors[vendors['qualification'] == 'qualified']['vendor'].tolist()
-qc_vendors = vendors[vendors['qualification'].isin(['qualified', 'conditional'])]['vendor'].tolist()
+qualified_vendors = vendors[vendors['qualification'] == 'qualified']['vendor'].tolist()
 
-split_q = cheapest_split(lines, vendors_allowed=q_vendors, basis='price_inr', include_suspect=False)
-split_qc = cheapest_split(lines, vendors_allowed=qc_vendors, basis='price_inr', include_suspect=False)
+# Scenario 1: Only fully qualified vendors
+split_qualified = cheapest_split(lines, vendors_allowed=qualified_vendors, basis='press_inr' if 'press_inr' in lines.columns else 'price_inr', include_suspect=False)
 
-tot_q = float(split_q['annual_value'].sum())
-tot_qc = float(split_qc['annual_value'].sum())
+# Scenario 2: Qualified + Conditional vendors
+qualified_and_conditional = vendors[vendors['qualification'].isin(['qualified', 'conditional'])]['vendor'].tolist()
+split_all_eligible = cheapest_split(lines, vendors_allowed=qualified_and_conditional, basis='price_inr', include_suspect=False)
 
-missing_q = split_q[split_q['winner'].isna()]['line'].tolist()
-missing_qc = split_qc[split_qc['winner'].isna()]['line'].tolist()
+# Summary metrics for qualified only
+lines_no_quote_q = split_qualified[split_qualified['winner'].isna()]['line'].tolist()
+total_val_q = float(split_qualified['annual_value'].sum())
+
+# Summary metrics for qualified + conditional
+lines_no_quote_all = split_all_eligible[split_all_eligible['winner'].isna()]['line'].tolist()
+total_val_all = float(split_all_eligible['annual_value'].sum())
 
 result = {
-    "summary": {
-        "qualified_only_total_annual_value": tot_q,
-        "qualified_and_conditional_total_annual_value": tot_qc,
-        "difference_q_minus_qc": tot_q - tot_qc,
-        "lines_without_eligible_quote_qualified_only": missing_q,
-        "lines_without_eligible_quote_qualified_and_conditional": missing_qc
-    },
-    "table_qualified_only": split_q,
-    "table_qualified_and_conditional": split_qc
-}
-
-```
-
-**Computed result:**
-
-|   line
+    "qualified_only": {
+        "total_annual_value_inr": round(total_val_q, 2)
