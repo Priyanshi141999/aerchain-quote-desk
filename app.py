@@ -393,7 +393,7 @@ elif page.startswith("3"):
                 "awaiting vendor confirmation · strikethrough = suspected error, excluded from ranking")
     st.progress(n_ver / max(n_priced, 1), text=f"{n_ver} of {n_priced} prices confirmed by vendors")
     st.dataframe(disp.style.apply(style, axis=None), width="stretch", height=560,
-                 column_config={"Item": st.column_config.TextColumn(width="large")})
+                 column_config={"Item": st.column_config.TextColumn(width="medium")})
     if not best.empty:
         l1_total = (best[col] * best.annual_qty).sum()
         n_l1 = best.line.nunique()
