@@ -25,21 +25,24 @@ for k in ("GEMINI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_MODEL", "CLAUDE_MODEL")
         pass
 
 import importlib  # noqa: E402
-import quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extract, quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot, quotedesk.llm  # noqa: E401,E402
-# Streamlit re-runs app.py on each change but keeps imported modules cached; reload them so app and logic never drift apart
-# (only when a file actually changed, so in-memory state such as busy-model cooldowns survives normal reruns)
 import sys as _sys  # noqa: E402
-_first = not hasattr(_sys, "_qd_mtimes")
-_seen = getattr(_sys, "_qd_mtimes", {})
-_changed = _first  # first run of this app version in a long-lived server: refresh everything once
-import quotedesk.updates  # noqa: E402
-for _m in (quotedesk.llm, quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extract,
-           quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot, quotedesk.updates):
-    _mt = os.path.getmtime(_m.__file__)
-    if _changed or (_m.__name__ in _seen and _seen[_m.__name__] != _mt):
-        importlib.reload(_m)
-        _changed = True
-    _seen[_m.__name__] = _mt
+# Streamlit re-runs app.py on each change but may keep imported helper modules cached. Reload a helper when its
+# file changed (and once per server start), looking modules up by NAME so a half-reloaded package can't break the app.
+_QD = ["quotedesk.llm", "quotedesk.ingest", "quotedesk.normalize", "quotedesk.checks", "quotedesk.extract",
+       "quotedesk.pipeline", "quotedesk.tables", "quotedesk.analyst", "quotedesk.copilot", "quotedesk.updates"]
+_seen = getattr(_sys, "_qd_mtimes", None)
+_changed = _seen is None
+_seen = _seen or {}
+for _name in _QD:
+    try:
+        _m = importlib.import_module(_name)
+        _mt = os.path.getmtime(_m.__file__)
+        if _changed or _seen.get(_name, _mt) != _mt:
+            importlib.reload(_m)
+            _changed = True
+        _seen[_name] = _mt
+    except Exception as _e:  # never let the refresh itself take the app down
+        print(f"[app] module refresh skipped for {_name}: {_e}", flush=True)
 _sys._qd_mtimes = _seen
 from quotedesk import analyst, copilot, llm, updates  # noqa: E402
 from quotedesk.normalize import SETTINGS  # noqa: E402
@@ -357,6 +360,42 @@ elif page.startswith("3"):
     updates_banner()
     st.caption(f"Must-pass questions used for qualification: **{', '.join(MUST)}**"
                + (" (as set when the RFQ was published)" if ss.get("published_questions") else " (company standard)"))
+    view = st.radio("View", ["💰 Prices", "📋 Questionnaire answers"], horizontal=True, label_visibility="collapsed")
+    if view.startswith("📋"):
+        ICON = {"yes": "✅", "no": "❌", "partial": "🟡", "pending": "⏳", "not_answered": "➖"}
+        st.markdown("Every vendor's answer to every question, as read from their documents (or updated in the portal). "
+                    "✅ meets the requirement · ❌ does not · 🟡 partly / needs review · ⏳ promised later · ➖ not answered. "
+                    "**Must-pass** questions decide qualification.")
+        qtext = {q["id"]: q for q in EFFQ["questions"]}
+        rows = []
+        for qid, q in qtext.items():
+            row = {"Q": qid, "Question": q["text"], "Must-pass": "MUST-PASS" if q["must_pass"] else ""}
+            for vk_, v_ in R.items():
+                a_ = v_["qualification"]["questions"].get(qid, {})
+                ans = (a_.get("answer") or "").strip()
+                why = (a_.get("reason") or "").strip()
+                stt_ = a_.get("status", "not_answered")
+                cell = ans[:80] if ans else why[:80]
+                if stt_ != "yes" and ans and why and why not in ans:
+                    cell += f" → {why[:70]}"  # claim vs evidence, e.g. "Yes, certified → expired 31 Mar 2026"
+                row[short_name(v_["name"])] = f"{ICON.get(stt_, '➖')} {cell}"
+            rows.append(row)
+        qdf = pd.DataFrame(rows)
+        st.dataframe(qdf, hide_index=True, width="stretch", height=430,
+                     column_config={"Question": st.column_config.TextColumn(width="medium")})
+        # overall line under the table
+        st.markdown("**Result:** " + " · ".join(f"{short_name(v_['name'])}: {badge(v_['qualification']['overall'])}"
+                                                for v_ in R.values()), unsafe_allow_html=True)
+        st.subheader("Look at one question in detail")
+        qsel = st.selectbox("Question", list(qtext), format_func=lambda i: f"{i} · {qtext[i]['text'][:90]}")
+        st.caption(f"Requirement: {qtext[qsel].get('pass_rule', '')}" + (" · **must-pass**" if qtext[qsel]["must_pass"] else ""))
+        for vk_, v_ in R.items():
+            a_ = v_["qualification"]["questions"].get(qsel, {})
+            raw = next((x for x in (v_["extraction"].get("questionnaire") or []) if x.get("qid") == qsel), {})
+            st.markdown(f"{ICON.get(a_.get('status', 'not_answered'), '➖')} **{v_['name']}** — "
+                        f"{a_.get('answer') or '_no answer_'}  \n<span class='qd-muted'>Assessment: {a_.get('reason', '')}"
+                        f"{' · Source: ' + str(raw.get('source')) if raw.get('source') else ''}</span>", unsafe_allow_html=True)
+        st.stop()
     c = st.columns([2, 2, 2, 3])
     basis = c[0].radio("Price basis", ["Basic price", "Landed (incl. freight)"], horizontal=False)
     scope = c[1].radio("Vendors", ["All vendors", "Qualified + conditional", "Qualified only"])
