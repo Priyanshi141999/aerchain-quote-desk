@@ -29,8 +29,9 @@ import quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extrac
 # Streamlit re-runs app.py on each change but keeps imported modules cached; reload them so app and logic never drift apart
 # (only when a file actually changed, so in-memory state such as busy-model cooldowns survives normal reruns)
 import sys as _sys  # noqa: E402
+_first = not hasattr(_sys, "_qd_mtimes")
 _seen = getattr(_sys, "_qd_mtimes", {})
-_changed = False
+_changed = _first  # first run of this app version in a long-lived server: refresh everything once
 for _m in (quotedesk.llm, quotedesk.ingest, quotedesk.normalize, quotedesk.checks, quotedesk.extract,
            quotedesk.pipeline, quotedesk.tables, quotedesk.analyst, quotedesk.copilot):
     _mt = os.path.getmtime(_m.__file__)
